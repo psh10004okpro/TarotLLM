@@ -121,6 +121,110 @@ Redis가 없어도 메모리 기반 세션 관리로 정상 작동합니다:
 python -m app.main
 ```
 
+## 🔍 Vector Database Setup
+
+벡터 검색 기능을 활성화하려면 ChromaDB 벡터 데이터베이스를 초기화해야 합니다:
+
+### 1단계: 의존성 설치
+
+```bash
+# sentence-transformers는 requirements.txt에 포함되어 있습니다
+pip install -r requirements.txt
+```
+
+### 2단계: 벡터 DB 초기화
+
+```bash
+# 기본 초기화 (인덱스가 없으면 생성)
+python init_vector_db.py
+
+# 강제 재인덱싱 (기존 데이터 삭제 후 재생성)
+python init_vector_db.py --force-reindex
+
+# 통계 정보만 출력
+python init_vector_db.py --stats
+
+# 검색 테스트
+python init_vector_db.py --test-search
+
+# 전체 파이프라인 (인덱싱 + 통계 + 테스트)
+python init_vector_db.py --all
+```
+
+**예상 결과:**
+```
+🎴 Unwoldam Tarot - Vector Database Initialization
+======================================================================
+
+📋 Checking dependencies...
+
+✓ 타로카드 데이터: 78장
+✓ 임베딩 서비스: local
+  - 모델 차원: 384
+✓ ChromaDB 컬렉션: tarot_cards
+
+🚀 Starting vector database indexing...
+----------------------------------------------------------------------
+📚 78장의 타로카드 인덱싱 시작...
+📝 총 312개의 문서 생성됨
+🔢 임베딩 생성 중... (차원: 384)
+   ✓ 312/312 문서 인덱싱 완료
+
+✅ 인덱싱 완료! 총 312개 문서
+```
+
+### 3단계: 벡터 검색 기능 테스트
+
+```bash
+# 종합 테스트 실행 (8가지 테스트 시나리오)
+python test_vector_search.py
+```
+
+**테스트 항목:**
+- ✅ Basic Initialization (서비스 초기화 확인)
+- ✅ Vector Indexing (벡터 인덱싱 검증)
+- ✅ Basic Search (기본 검색 기능)
+- ✅ Context Filtering (컨텍스트별 필터링)
+- ✅ Card-Specific Search (특정 카드 검색)
+- ✅ Context Generation (리딩 컨텍스트 생성)
+- ✅ Similarity Scores (유사도 점수 검증)
+- ✅ Performance (성능 테스트)
+
+### 벡터 검색 사용하기
+
+벡터 검색을 활성화하면 LLM에게 더 정확한 카드 해석 컨텍스트를 제공할 수 있습니다:
+
+```python
+from app.services.rag_service import rag_service
+
+# RAG 활성화된 컨텍스트 생성
+context = rag_service.get_context_for_reading(
+    cards=[0, 6, 19],  # The Fool, The Lovers, The Sun
+    question="내 연애운은 어떻게 될까요?",
+    context_type="love",
+    use_vector_search=True  # ✨ 벡터 검색 활성화!
+)
+
+# 이제 context에는:
+# - 선택된 카드들의 의미
+# - 질문과 의미적으로 유사한 해석 사례 3개
+# - 컨텍스트별(love, finance 등) 맞춤 정보
+```
+
+### 임베딩 프로바이더 변경
+
+기본적으로 로컬 `sentence-transformers` 모델을 사용하지만, OpenAI 임베딩도 사용 가능합니다:
+
+```python
+# app/services/embedding_service.py 마지막 줄
+embedding_service = EmbeddingService(provider="local")  # 기본
+# embedding_service = EmbeddingService(provider="openai")  # OpenAI 사용 시
+```
+
+**장단점:**
+- **Local (기본)**: 무료, 오프라인 가능, 다국어 지원 (384차원)
+- **OpenAI**: 더 높은 정확도, API 키 필요, 비용 발생 (1536차원)
+
 ## Configuration
 
 Edit the `.env` file with your API keys and preferences:
@@ -375,12 +479,15 @@ See [Persona System Guide (Korean)](docs/PERSONA_SYSTEM_GUIDE_KR.md) for detaile
 - [x] Gemini (Pro)
 - [x] 스트리밍 지원
 
-#### Phase 4: RAG 시스템 구축 ✅
+#### Phase 4: RAG 시스템 구축 ✅ (100% 완료)
 - [x] ChromaDB 벡터 데이터베이스
-- [x] 임베딩 서비스
-- [x] 312개 문서 인덱싱
-- [x] 시맨틱 검색
+- [x] 임베딩 서비스 (OpenAI + Local)
+- [x] sentence-transformers 통합
+- [x] 312개 문서 인덱싱 (78장 × 4타입)
+- [x] 시맨틱 벡터 검색
 - [x] 컨텍스트 인식 검색
+- [x] 자동 초기화 스크립트
+- [x] 종합 테스트 스위트
 
 #### Phase 5: 타로마스터 페르소나 시스템 ✅
 - [x] 3명의 독특한 페르소나
