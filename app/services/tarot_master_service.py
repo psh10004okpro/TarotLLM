@@ -190,7 +190,7 @@ class TarotMasterService:
         )
 
         # Update session
-        await session_service.update_interaction(session.session_id)
+        await session_service.increment_interaction(session.session_id)
 
         # Create response
         reading_response = ReadingResponse(
@@ -259,10 +259,11 @@ class TarotMasterService:
         )
 
         # Prepare context for prompt
+        persona = self.get_persona(persona_id)
         context = {
             "meeting_count": session.interaction_count + 1,
             "user_name": user_name,
-            "interpret_reversed": getattr(persona_id, 'supports_reversed', True)
+            "interpret_reversed": getattr(persona, 'supports_reversed', True)
         }
 
         # Get prompt

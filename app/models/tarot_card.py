@@ -84,7 +84,7 @@ class TarotCard(BaseModel):
                             return 22 + (suit_idx * 14) + rank_idx
 
             return 0  # Fallback
-        except:
+        except Exception:
             return 0
 
     @property
@@ -99,7 +99,7 @@ class TarotCard(BaseModel):
                     name = name.split(".", 1)[1].strip()
                 return name
             return self.card
-        except:
+        except Exception:
             return self.card
 
     @property
@@ -110,7 +110,7 @@ class TarotCard(BaseModel):
             if len(parts) >= 2:
                 return parts[1].strip()
             return ""
-        except:
+        except Exception:
             return ""
 
     @property

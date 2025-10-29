@@ -46,7 +46,8 @@ class VectorStoreService:
                     name=self.collection_name
                 )
                 print(f"✓ 기존 컬렉션 로드: {self.collection_name}")
-            except:
+            except Exception:
+                # Collection doesn't exist, create new one
                 self.collection = self.client.create_collection(
                     name=self.collection_name,
                     metadata={"description": "Tarot card meanings and interpretations"}

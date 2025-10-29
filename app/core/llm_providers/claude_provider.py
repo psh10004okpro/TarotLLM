@@ -3,6 +3,7 @@ Claude LLM Provider
 Anthropic Claude API integration
 """
 
+import asyncio
 from typing import Optional, AsyncIterator
 from app.core.llm_providers.base import BaseLLMProvider
 from app.config import settings
@@ -65,19 +66,24 @@ class ClaudeProvider(BaseLLMProvider):
             # Prepare messages
             messages = [{"role": "user", "content": prompt}]
 
-            # Create request
-            response = await self.client.messages.create(
-                model=self.model_name,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                system=system_prompt if system_prompt else "",
-                messages=messages,
-                **kwargs
+            # Create request with timeout (30 seconds)
+            response = await asyncio.wait_for(
+                self.client.messages.create(
+                    model=self.model_name,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    system=system_prompt if system_prompt else "",
+                    messages=messages,
+                    **kwargs
+                ),
+                timeout=30.0
             )
 
             # Extract text from response
             return response.content[0].text
 
+        except asyncio.TimeoutError:
+            raise RuntimeError("Claude API request timed out after 30 seconds")
         except Exception as e:
             raise RuntimeError(f"Claude API error: {str(e)}")
 

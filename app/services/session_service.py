@@ -35,14 +35,18 @@ class SessionService:
 
         if REDIS_AVAILABLE:
             try:
-                # Redis 연결 시도 (로컬 개발 환경)
-                self.redis_client = redis.Redis(
-                    host='localhost',
-                    port=6379,
-                    db=0,
-                    decode_responses=True,
-                    socket_connect_timeout=1
-                )
+                # Redis 연결 시도 (환경변수 사용)
+                redis_kwargs = {
+                    'host': settings.REDIS_HOST,
+                    'port': settings.REDIS_PORT,
+                    'db': settings.REDIS_DB,
+                    'decode_responses': True,
+                    'socket_connect_timeout': 1
+                }
+                if settings.REDIS_PASSWORD:
+                    redis_kwargs['password'] = settings.REDIS_PASSWORD
+
+                self.redis_client = redis.Redis(**redis_kwargs)
                 # 연결 테스트
                 self.redis_client.ping()
                 print("✅ Redis 연결 성공")

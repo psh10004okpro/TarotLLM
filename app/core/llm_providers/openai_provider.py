@@ -3,6 +3,7 @@ OpenAI LLM Provider
 OpenAI GPT API integration
 """
 
+import asyncio
 from typing import Optional, AsyncIterator
 from app.core.llm_providers.base import BaseLLMProvider
 from app.config import settings
@@ -65,18 +66,23 @@ class OpenAIProvider(BaseLLMProvider):
             # Prepare messages
             messages = self._prepare_messages(prompt, system_prompt)
 
-            # Create chat completion
-            response = await self.client.chat.completions.create(
-                model=self.model_name,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                **kwargs
+            # Create chat completion with timeout (30 seconds)
+            response = await asyncio.wait_for(
+                self.client.chat.completions.create(
+                    model=self.model_name,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    **kwargs
+                ),
+                timeout=30.0
             )
 
             # Extract text from response
             return response.choices[0].message.content
 
+        except asyncio.TimeoutError:
+            raise RuntimeError("OpenAI API request timed out after 30 seconds")
         except Exception as e:
             raise RuntimeError(f"OpenAI API error: {str(e)}")
 

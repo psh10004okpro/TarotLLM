@@ -3,6 +3,7 @@ Google Gemini LLM Provider
 Google Gemini API integration
 """
 
+import asyncio
 from typing import Optional, AsyncIterator
 from app.core.llm_providers.base import BaseLLMProvider
 from app.config import settings
@@ -74,14 +75,19 @@ class GeminiProvider(BaseLLMProvider):
                 "max_output_tokens": max_tokens,
             }
 
-            # Generate content
-            response = await self.client.generate_content_async(
-                full_prompt,
-                generation_config=generation_config
+            # Generate content with timeout (30 seconds)
+            response = await asyncio.wait_for(
+                self.client.generate_content_async(
+                    full_prompt,
+                    generation_config=generation_config
+                ),
+                timeout=30.0
             )
 
             return response.text
 
+        except asyncio.TimeoutError:
+            raise RuntimeError("Gemini API request timed out after 30 seconds")
         except Exception as e:
             raise RuntimeError(f"Gemini API error: {str(e)}")
 

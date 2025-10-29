@@ -233,7 +233,8 @@ class RAGService:
                 try:
                     from app.services.vector_store_service import vector_store
                     self.vector_store = vector_store
-                except:
+                except (ImportError, Exception):
+                    # Vector store not available
                     pass
 
             if self.vector_store and self.vector_store.collection:

@@ -129,7 +129,7 @@ async def health_check():
     try:
         card_count = len(rag_service.get_all_cards())
         rag_status = "healthy"
-    except:
+    except Exception as e:
         card_count = 0
         rag_status = "error"
 

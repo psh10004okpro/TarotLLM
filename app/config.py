@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     SESSION_EXPIRY_HOURS: int = 24
     MAX_SESSION_HISTORY: int = 100
 
+    # Redis Settings
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    REDIS_PASSWORD: Optional[str] = None
+
     # Prompt System Settings
     USE_OPTIMIZED_PROMPTS: bool = True           # Enable 2-stage prompt system
     USE_DETAILED_ON_FIRST: bool = True           # Use detailed prompt on first message

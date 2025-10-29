@@ -125,7 +125,7 @@ async def create_tarot_reading(request: ReadingRequest):
         llm_provider = master_config["llm_provider"]
 
         # 9. Generate interpretation
-        interpretation = await llm_service.generate(
+        interpretation = await llm_service.generate_response(
             prompt=user_message,
             system_prompt=system_prompt,
             provider_name=llm_provider,
