@@ -24,8 +24,8 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(tarot_reading.router, prefix="/api/v1", tags=["Tarot Reading"])
-app.include_router(tarot_master.router, prefix="/api/v1", tags=["Tarot Master"])
+app.include_router(tarot_reading.router, prefix="/api/v1/tarot", tags=["Tarot Reading"])
+app.include_router(tarot_master.router, prefix="/api/v1/tarot", tags=["Tarot Master"])
 
 @app.get("/")
 async def root():
