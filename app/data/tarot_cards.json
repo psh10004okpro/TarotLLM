@@ -1,0 +1,222 @@
+[
+  {
+    "id": 0,
+    "name": "The Fool",
+    "name_ko": "광대",
+    "suit": "major_arcana",
+    "number": 0,
+    "keywords_upright": ["new beginnings", "innocence", "spontaneity", "free spirit"],
+    "keywords_reversed": ["recklessness", "fearfulness", "risk-taking", "inconsideration"],
+    "description": "The Fool represents new beginnings, having faith in the future, being inexperienced, not knowing what to expect, having beginner's luck, improvisation and believing in the universe."
+  },
+  {
+    "id": 1,
+    "name": "The Magician",
+    "name_ko": "마법사",
+    "suit": "major_arcana",
+    "number": 1,
+    "keywords_upright": ["manifestation", "resourcefulness", "power", "inspired action"],
+    "keywords_reversed": ["manipulation", "poor planning", "untapped talents"],
+    "description": "The Magician represents manifestation, resourcefulness, inspired action, and having the power to create the reality you desire."
+  },
+  {
+    "id": 2,
+    "name": "The High Priestess",
+    "name_ko": "여사제",
+    "suit": "major_arcana",
+    "number": 2,
+    "keywords_upright": ["intuition", "sacred knowledge", "divine feminine", "subconscious mind"],
+    "keywords_reversed": ["secrets", "disconnected from intuition", "withdrawal"],
+    "description": "The High Priestess represents intuition, sacred knowledge, the divine feminine, and the subconscious mind."
+  },
+  {
+    "id": 3,
+    "name": "The Empress",
+    "name_ko": "여제",
+    "suit": "major_arcana",
+    "number": 3,
+    "keywords_upright": ["femininity", "beauty", "nature", "nurturing", "abundance"],
+    "keywords_reversed": ["creative block", "dependence on others"],
+    "description": "The Empress represents femininity, beauty, nature, nurturing, and abundance. She is a mother figure who brings comfort and growth."
+  },
+  {
+    "id": 4,
+    "name": "The Emperor",
+    "name_ko": "황제",
+    "suit": "major_arcana",
+    "number": 4,
+    "keywords_upright": ["authority", "establishment", "structure", "father figure"],
+    "keywords_reversed": ["domination", "excessive control", "lack of discipline"],
+    "description": "The Emperor represents authority, structure, control, and father figure. He brings stability and order."
+  },
+  {
+    "id": 5,
+    "name": "The Hierophant",
+    "name_ko": "교황",
+    "suit": "major_arcana",
+    "number": 5,
+    "keywords_upright": ["spiritual wisdom", "religious beliefs", "conformity", "tradition"],
+    "keywords_reversed": ["personal beliefs", "freedom", "challenging the status quo"],
+    "description": "The Hierophant represents spiritual wisdom, tradition, institutions, and conformity to social norms."
+  },
+  {
+    "id": 6,
+    "name": "The Lovers",
+    "name_ko": "연인",
+    "suit": "major_arcana",
+    "number": 6,
+    "keywords_upright": ["love", "harmony", "relationships", "values alignment"],
+    "keywords_reversed": ["self-love", "disharmony", "imbalance", "misalignment"],
+    "description": "The Lovers represents love, harmony, relationships, and the alignment of values. It speaks to choices and commitments."
+  },
+  {
+    "id": 7,
+    "name": "The Chariot",
+    "name_ko": "전차",
+    "suit": "major_arcana",
+    "number": 7,
+    "keywords_upright": ["control", "willpower", "success", "determination"],
+    "keywords_reversed": ["lack of control", "lack of direction", "aggression"],
+    "description": "The Chariot represents control, willpower, success, action, and determination in achieving goals."
+  },
+  {
+    "id": 8,
+    "name": "Strength",
+    "name_ko": "힘",
+    "suit": "major_arcana",
+    "number": 8,
+    "keywords_upright": ["courage", "persuasion", "influence", "compassion"],
+    "keywords_reversed": ["inner strength", "self-doubt", "low energy"],
+    "description": "Strength represents inner strength, courage, persuasion, influence, and compassion. It's about gentle control."
+  },
+  {
+    "id": 9,
+    "name": "The Hermit",
+    "name_ko": "은둔자",
+    "suit": "major_arcana",
+    "number": 9,
+    "keywords_upright": ["soul searching", "introspection", "inner guidance", "solitude"],
+    "keywords_reversed": ["isolation", "loneliness", "withdrawal"],
+    "description": "The Hermit represents soul searching, introspection, being alone, and inner guidance through solitude."
+  },
+  {
+    "id": 10,
+    "name": "Wheel of Fortune",
+    "name_ko": "운명의 수레바퀴",
+    "suit": "major_arcana",
+    "number": 10,
+    "keywords_upright": ["good luck", "karma", "life cycles", "destiny"],
+    "keywords_reversed": ["bad luck", "resistance to change", "breaking cycles"],
+    "description": "The Wheel of Fortune represents good luck, karma, life cycles, destiny, and turning points."
+  },
+  {
+    "id": 11,
+    "name": "Justice",
+    "name_ko": "정의",
+    "suit": "major_arcana",
+    "number": 11,
+    "keywords_upright": ["justice", "fairness", "truth", "cause and effect"],
+    "keywords_reversed": ["unfairness", "lack of accountability", "dishonesty"],
+    "description": "Justice represents justice, fairness, truth, cause and effect, and the law of karma."
+  },
+  {
+    "id": 12,
+    "name": "The Hanged Man",
+    "name_ko": "매달린 사람",
+    "suit": "major_arcana",
+    "number": 12,
+    "keywords_upright": ["pause", "surrender", "letting go", "new perspectives"],
+    "keywords_reversed": ["delays", "resistance", "stalling"],
+    "description": "The Hanged Man represents pause, surrender, letting go, and gaining new perspectives through sacrifice."
+  },
+  {
+    "id": 13,
+    "name": "Death",
+    "name_ko": "죽음",
+    "suit": "major_arcana",
+    "number": 13,
+    "keywords_upright": ["endings", "change", "transformation", "transition"],
+    "keywords_reversed": ["resistance to change", "personal transformation", "inner purging"],
+    "description": "Death represents endings, change, transformation, and transition. It's about letting go of the old to make way for the new."
+  },
+  {
+    "id": 14,
+    "name": "Temperance",
+    "name_ko": "절제",
+    "suit": "major_arcana",
+    "number": 14,
+    "keywords_upright": ["balance", "moderation", "patience", "purpose"],
+    "keywords_reversed": ["imbalance", "excess", "self-healing", "re-alignment"],
+    "description": "Temperance represents balance, moderation, patience, purpose, and finding the middle way."
+  },
+  {
+    "id": 15,
+    "name": "The Devil",
+    "name_ko": "악마",
+    "suit": "major_arcana",
+    "number": 15,
+    "keywords_upright": ["shadow self", "attachment", "addiction", "restriction"],
+    "keywords_reversed": ["releasing limiting beliefs", "exploring dark thoughts", "detachment"],
+    "description": "The Devil represents shadow self, attachment, addiction, restriction, and materialism."
+  },
+  {
+    "id": 16,
+    "name": "The Tower",
+    "name_ko": "탑",
+    "suit": "major_arcana",
+    "number": 16,
+    "keywords_upright": ["sudden change", "upheaval", "chaos", "revelation"],
+    "keywords_reversed": ["personal transformation", "fear of change", "averting disaster"],
+    "description": "The Tower represents sudden change, upheaval, chaos, revelation, and awakening."
+  },
+  {
+    "id": 17,
+    "name": "The Star",
+    "name_ko": "별",
+    "suit": "major_arcana",
+    "number": 17,
+    "keywords_upright": ["hope", "faith", "purpose", "renewal", "spirituality"],
+    "keywords_reversed": ["lack of faith", "despair", "self-trust", "disconnection"],
+    "description": "The Star represents hope, faith, purpose, renewal, and spirituality. It brings healing and optimism."
+  },
+  {
+    "id": 18,
+    "name": "The Moon",
+    "name_ko": "달",
+    "suit": "major_arcana",
+    "number": 18,
+    "keywords_upright": ["illusion", "fear", "anxiety", "subconscious", "intuition"],
+    "keywords_reversed": ["release of fear", "repressed emotion", "inner confusion"],
+    "description": "The Moon represents illusion, fear, anxiety, subconscious, and intuition. It speaks to what's hidden."
+  },
+  {
+    "id": 19,
+    "name": "The Sun",
+    "name_ko": "태양",
+    "suit": "major_arcana",
+    "number": 19,
+    "keywords_upright": ["positivity", "fun", "warmth", "success", "vitality"],
+    "keywords_reversed": ["inner child", "feeling down", "overly optimistic"],
+    "description": "The Sun represents positivity, fun, warmth, success, and vitality. It brings joy and abundance."
+  },
+  {
+    "id": 20,
+    "name": "Judgement",
+    "name_ko": "심판",
+    "suit": "major_arcana",
+    "number": 20,
+    "keywords_upright": ["judgement", "rebirth", "inner calling", "absolution"],
+    "keywords_reversed": ["self-doubt", "inner critic", "ignoring the call"],
+    "description": "Judgement represents judgement, rebirth, inner calling, and absolution. It's about reflection and transformation."
+  },
+  {
+    "id": 21,
+    "name": "The World",
+    "name_ko": "세계",
+    "suit": "major_arcana",
+    "number": 21,
+    "keywords_upright": ["completion", "integration", "accomplishment", "travel"],
+    "keywords_reversed": ["seeking personal closure", "short-cuts", "delays"],
+    "description": "The World represents completion, integration, accomplishment, and travel. It signifies the end of a cycle and fulfillment."
+  }
+]
