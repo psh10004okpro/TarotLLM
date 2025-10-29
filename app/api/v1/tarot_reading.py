@@ -77,11 +77,11 @@ async def create_tarot_reading(request: ReadingRequest):
 
         # 4. Process cards (manual selection or auto-draw)
         if request.cards:
-            # Manual card selection
-            drawn_cards = await _process_manual_cards(request.cards, request.spread_type)
+            # Manual card selection (Phase 9: Pass master_id for reversed settings)
+            drawn_cards = await _process_manual_cards(request.cards, request.spread_type, master_id=master_id)
         else:
-            # Auto-draw cards
-            drawn_cards = tarot_master_service.draw_cards(request.spread_type)
+            # Auto-draw cards (Phase 9: Pass master_id for reversed settings)
+            drawn_cards = tarot_master_service.draw_cards(request.spread_type, master_id=master_id)
 
         # 5. Get card context from RAG
         card_ids = [dc.card.id for dc in drawn_cards]
@@ -386,10 +386,19 @@ async def list_spread_types():
 
 async def _process_manual_cards(
     card_inputs: List[CardInput],
-    spread_type: SpreadType
+    spread_type: SpreadType,
+    master_id: Optional[str] = None
 ) -> List[DrawnCard]:
-    """Process manually selected cards into DrawnCard objects"""
+    """
+    Process manually selected cards into DrawnCard objects
+    Phase 9: Respect master's interpret_reversed setting
+    """
     drawn_cards = []
+
+    # Phase 9: Check if this tarot master interprets reversed cards
+    interpret_reversed = True  # Default
+    if master_id and master_id in TAROT_MASTERS:
+        interpret_reversed = TAROT_MASTERS[master_id].get("interpret_reversed", True)
 
     # Get all available cards
     all_cards = rag_service.get_all_cards()
@@ -413,6 +422,10 @@ async def _process_manual_cards(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid orientation: {card_input.orientation}. Must be 'upright' or 'reversed'"
             )
+
+        # Phase 9: Force upright if master doesn't interpret reversed
+        if not interpret_reversed and orientation == CardOrientation.REVERSED:
+            orientation = CardOrientation.UPRIGHT
 
         drawn_cards.append(DrawnCard(
             card=card,

@@ -20,6 +20,7 @@ from app.core.personas.prompt_manager import (
 from app.services.llm_service import llm_service
 from app.services.rag_service import rag_service
 from app.services.session_service import session_service
+from app.config import TAROT_MASTERS
 import uuid
 
 
@@ -42,12 +43,17 @@ class TarotMasterService:
             pid = self.default_persona_id
         return self.personas[pid]
 
-    def draw_cards(self, spread_type: SpreadType) -> List[DrawnCard]:
+    def draw_cards(
+        self,
+        spread_type: SpreadType,
+        master_id: Optional[str] = None
+    ) -> List[DrawnCard]:
         """
-        Draw cards for a reading
+        Draw cards for a reading (Phase 9: 역방향 설정 적용)
 
         Args:
             spread_type: Type of spread
+            master_id: Tarot master ID (e.g., "master_1", "master_2", "master_3")
 
         Returns:
             List of drawn cards with orientations
@@ -72,12 +78,24 @@ class TarotMasterService:
         # Randomly select cards without replacement
         selected_cards = random.sample(all_cards, min(num_cards, len(all_cards)))
 
+        # Phase 9: Check if this tarot master interprets reversed cards
+        interpret_reversed = True  # Default
+        if master_id and master_id in TAROT_MASTERS:
+            interpret_reversed = TAROT_MASTERS[master_id].get("interpret_reversed", True)
+
         # Assign orientations and positions
         drawn_cards = []
         positions = self._get_positions_for_spread(spread_type)
 
         for i, card in enumerate(selected_cards):
-            orientation = random.choice([CardOrientation.UPRIGHT, CardOrientation.REVERSED])
+            # Phase 9: Only allow reversed cards if master supports it
+            if interpret_reversed:
+                # Master supports reversed interpretation
+                orientation = random.choice([CardOrientation.UPRIGHT, CardOrientation.REVERSED])
+            else:
+                # Master only uses upright (positive) interpretation
+                orientation = CardOrientation.UPRIGHT
+
             position = positions[i] if i < len(positions) else None
 
             drawn_cards.append(DrawnCard(
@@ -126,8 +144,11 @@ class TarotMasterService:
         persona_id = request.tarot_master_id or session.preferred_tarot_master or self.default_persona_id
         persona = self.get_persona(persona_id)
 
-        # Draw cards
-        drawn_cards = self.draw_cards(request.spread_type)
+        # Map persona_id to master_id (Phase 9)
+        master_id = f"master_{persona_id}"
+
+        # Draw cards (Phase 9: Pass master_id for reversed card settings)
+        drawn_cards = self.draw_cards(request.spread_type, master_id=master_id)
 
         # Get card context from RAG
         card_ids = [dc.card.id for dc in drawn_cards]
