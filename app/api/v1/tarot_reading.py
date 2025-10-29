@@ -109,7 +109,7 @@ async def create_tarot_reading(request: ReadingRequest):
             is_first_message=is_first_message,
             complexity=analysis["complexity"],
             card_count=len(drawn_cards),
-            interpret_reversed=request.settings.interpret_reversed if request.settings else True
+            interpret_reversed=getattr(request.settings, 'interpret_reversed', True) if request.settings else True
         )
 
         # 7. Build user message

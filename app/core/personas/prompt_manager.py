@@ -3,7 +3,7 @@
 압축/상세 프롬프트를 상황에 맞게 선택하는 2단계 시스템
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from enum import Enum
 
 from .prompt_definitions import (
@@ -272,7 +272,7 @@ def get_master_prompt(
     return prompt, level
 
 
-def assess_question(concern: str, cards: list) -> Dict[str, any]:
+def assess_question(concern: str, cards: list) -> Dict[str, Any]:
     """
     질문과 카드를 분석하여 프롬프트 전략 결정
 

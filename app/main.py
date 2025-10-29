@@ -4,8 +4,9 @@ Main FastAPI application entry point
 Phase 10: 통합 및 테스트
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from app.config import settings
 from app.api.v1 import tarot_reading, tarot_master
@@ -48,9 +49,27 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"✗ 세션 서비스 초기화 실패: {str(e)}")
 
-    # 환경 설정 확인
+    # 환경 설정 확인 및 검증
     logger.info("⚙️ 환경 설정 확인:")
-    logger.info(f"  - LLM Providers: Claude, OpenAI, Gemini")
+
+    # API 키 검증
+    api_keys_status = {
+        "Claude (ANTHROPIC_API_KEY)": "✓" if settings.ANTHROPIC_API_KEY else "✗ Missing",
+        "OpenAI (OPENAI_API_KEY)": "✓" if settings.OPENAI_API_KEY else "✗ Missing",
+        "Gemini (GOOGLE_API_KEY)": "✓" if settings.GOOGLE_API_KEY else "✗ Missing"
+    }
+
+    for provider, status in api_keys_status.items():
+        if "Missing" in status:
+            logger.warning(f"  - {provider}: {status}")
+        else:
+            logger.info(f"  - {provider}: {status}")
+
+    # 최소 하나의 API 키는 필수
+    if not any([settings.ANTHROPIC_API_KEY, settings.OPENAI_API_KEY, settings.GOOGLE_API_KEY]):
+        logger.error("❌ 오류: 최소 하나의 LLM API 키가 필요합니다!")
+        logger.error("   .env 파일에 ANTHROPIC_API_KEY, OPENAI_API_KEY 또는 GOOGLE_API_KEY를 설정하세요.")
+
     logger.info(f"  - Tarot Masters: 3명 (달빛의 현자, 별빛의 안내자, 운명의 해석자)")
     logger.info(f"  - 역방향 설정: Master 1 ✓, Master 2 ✗, Master 3 ✓")
 
@@ -61,6 +80,15 @@ async def lifespan(app: FastAPI):
 
     # 종료 시
     logger.info("🛑 Unwoldam Tarot API 종료 중...")
+
+    # Redis 연결 종료
+    try:
+        if session_service.use_redis and session_service.redis_client:
+            session_service.redis_client.close()
+            logger.info("✓ Redis 연결 종료")
+    except Exception as e:
+        logger.error(f"✗ Redis 연결 종료 실패: {str(e)}")
+
     logger.info("✅ 정상 종료 완료")
 
 
@@ -91,6 +119,26 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Global exception handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """
+    글로벌 예외 핸들러 - 내부 에러를 숨기고 일반적인 메시지 반환
+    """
+    # 서버 로그에는 상세한 에러 기록
+    logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
+
+    # 클라이언트에는 일반적인 메시지만 반환
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "error": "Internal server error",
+            "message": "An unexpected error occurred. Please try again later.",
+            "status_code": 500
+        }
+    )
+
 
 # CORS middleware
 app.add_middleware(

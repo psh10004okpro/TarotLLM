@@ -8,6 +8,12 @@ from datetime import datetime
 from enum import Enum
 from app.models.tarot_card import DrawnCard, CardOrientation
 
+# Validation constants
+MAX_USER_ID_LENGTH = 100
+MIN_USER_ID_LENGTH = 1
+MAX_CONCERN_LENGTH = 2000
+MAX_USER_NAME_LENGTH = 50
+
 
 class SpreadType(str, Enum):
     """Types of tarot spreads"""
@@ -53,9 +59,9 @@ class ReadingSettings(BaseModel):
 
 class ReadingRequest(BaseModel):
     """Request for a tarot reading"""
-    user_id: str = Field(..., description="User identifier")
+    user_id: str = Field(..., description="User identifier", min_length=MIN_USER_ID_LENGTH, max_length=MAX_USER_ID_LENGTH)
     tarot_master: str = Field("master_1", description="Tarot master ID: master_1, master_2, or master_3")
-    concern: Optional[str] = Field(None, description="User's concern or question")
+    concern: Optional[str] = Field(None, description="User's concern or question", max_length=MAX_CONCERN_LENGTH)
     spread_type: SpreadType = Field(SpreadType.THREE_CARD, description="Type of spread")
     cards: Optional[List[CardInput]] = Field(None, description="Manually selected cards (optional, will be drawn if not provided)")
     settings: Optional[ReadingSettings] = Field(default_factory=ReadingSettings, description="Reading settings")
@@ -139,9 +145,9 @@ class ReadingHistory(BaseModel):
 
 class SessionRequest(BaseModel):
     """Request to create or get a session"""
-    user_id: str = Field(..., description="User identifier")
+    user_id: str = Field(..., description="User identifier", min_length=MIN_USER_ID_LENGTH, max_length=MAX_USER_ID_LENGTH)
     tarot_master: Optional[str] = Field(None, description="Preferred tarot master (master_1, master_2, master_3)")
-    user_name: Optional[str] = Field(None, description="User's name for personalized readings")
+    user_name: Optional[str] = Field(None, description="User's name for personalized readings", max_length=MAX_USER_NAME_LENGTH)
 
     class Config:
         json_schema_extra = {

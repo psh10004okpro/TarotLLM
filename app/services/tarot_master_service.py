@@ -59,14 +59,19 @@ class TarotMasterService:
             List of drawn cards with orientations
         """
         # Determine number of cards based on spread type
-        num_cards = {
+        num_cards_map = {
             SpreadType.SINGLE_CARD: 1,
             SpreadType.THREE_CARD: 3,
             SpreadType.CELTIC_CROSS: 10,
             SpreadType.RELATIONSHIP: 5,
             SpreadType.CAREER: 5,
             SpreadType.CUSTOM: 3
-        }.get(spread_type, 3)
+        }
+
+        if spread_type not in num_cards_map:
+            raise ValueError(f"Invalid spread type: {spread_type}. Must be one of: {list(num_cards_map.keys())}")
+
+        num_cards = num_cards_map[spread_type]
 
         # Get all available cards
         all_cards = rag_service.get_all_cards()

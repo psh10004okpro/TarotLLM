@@ -75,19 +75,19 @@ class GeminiProvider(BaseLLMProvider):
                 "max_output_tokens": max_tokens,
             }
 
-            # Generate content with timeout (30 seconds)
+            # Generate content with timeout
             response = await asyncio.wait_for(
                 self.client.generate_content_async(
                     full_prompt,
                     generation_config=generation_config
                 ),
-                timeout=30.0
+                timeout=settings.LLM_REQUEST_TIMEOUT
             )
 
             return response.text
 
         except asyncio.TimeoutError:
-            raise RuntimeError("Gemini API request timed out after 30 seconds")
+            raise RuntimeError(f"Gemini API request timed out after {settings.LLM_REQUEST_TIMEOUT} seconds")
         except Exception as e:
             raise RuntimeError(f"Gemini API error: {str(e)}")
 

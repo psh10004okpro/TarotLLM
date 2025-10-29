@@ -66,7 +66,7 @@ class ClaudeProvider(BaseLLMProvider):
             # Prepare messages
             messages = [{"role": "user", "content": prompt}]
 
-            # Create request with timeout (30 seconds)
+            # Create request with timeout
             response = await asyncio.wait_for(
                 self.client.messages.create(
                     model=self.model_name,
@@ -76,14 +76,14 @@ class ClaudeProvider(BaseLLMProvider):
                     messages=messages,
                     **kwargs
                 ),
-                timeout=30.0
+                timeout=settings.LLM_REQUEST_TIMEOUT
             )
 
             # Extract text from response
             return response.content[0].text
 
         except asyncio.TimeoutError:
-            raise RuntimeError("Claude API request timed out after 30 seconds")
+            raise RuntimeError(f"Claude API request timed out after {settings.LLM_REQUEST_TIMEOUT} seconds")
         except Exception as e:
             raise RuntimeError(f"Claude API error: {str(e)}")
 

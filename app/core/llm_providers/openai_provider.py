@@ -66,7 +66,7 @@ class OpenAIProvider(BaseLLMProvider):
             # Prepare messages
             messages = self._prepare_messages(prompt, system_prompt)
 
-            # Create chat completion with timeout (30 seconds)
+            # Create chat completion with timeout
             response = await asyncio.wait_for(
                 self.client.chat.completions.create(
                     model=self.model_name,
@@ -75,14 +75,14 @@ class OpenAIProvider(BaseLLMProvider):
                     temperature=temperature,
                     **kwargs
                 ),
-                timeout=30.0
+                timeout=settings.LLM_REQUEST_TIMEOUT
             )
 
             # Extract text from response
             return response.choices[0].message.content
 
         except asyncio.TimeoutError:
-            raise RuntimeError("OpenAI API request timed out after 30 seconds")
+            raise RuntimeError(f"OpenAI API request timed out after {settings.LLM_REQUEST_TIMEOUT} seconds")
         except Exception as e:
             raise RuntimeError(f"OpenAI API error: {str(e)}")
 

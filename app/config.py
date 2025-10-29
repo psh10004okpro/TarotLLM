@@ -65,6 +65,9 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
 
+    # LLM Request Settings
+    LLM_REQUEST_TIMEOUT: int = 30  # seconds
+
     class Config:
         env_file = ".env"
         case_sensitive = True
