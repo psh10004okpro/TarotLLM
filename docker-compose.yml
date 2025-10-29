@@ -1,0 +1,92 @@
+# =============================================================================
+# Unwoldam Tarot LLM API - Docker Compose
+# Phase 10: 통합 및 테스트
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Tarot API Service
+  # ============================================================================
+  tarot-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: unwoldam-tarot-api
+    ports:
+      - "8000:8000"
+    environment:
+      # API Settings
+      - API_V1_STR=/api/v1
+      - PROJECT_NAME=Unwoldam Tarot API
+      - VERSION=1.0.0
+
+      # CORS
+      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000
+
+      # LLM API Keys (환경변수에서 주입)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+
+      # Redis 설정
+      - REDIS_URL=redis://redis:6379/0
+
+      # Server Settings
+      - HOST=0.0.0.0
+      - PORT=8000
+      - ENVIRONMENT=production
+      - DEBUG=false
+
+      # Logging
+      - LOG_LEVEL=INFO
+    volumes:
+      # 데이터 및 로그 볼륨
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - tarot-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================================================
+  # Redis Service (세션 관리)
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: unwoldam-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - tarot-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  redis-data:
+    driver: local
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  tarot-network:
+    driver: bridge

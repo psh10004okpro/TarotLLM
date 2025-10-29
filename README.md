@@ -1,19 +1,38 @@
-# Unwoldam Tarot LLM API
+# 🎴 Unwoldam Tarot LLM API
 
 AI-powered Tarot Card Reading API with multiple LLM providers and diverse tarot master personas.
 
-## Features
+**Phase 1-10 완료** ✅ | Version 1.0.0 | [API Documentation](http://localhost:8000/docs)
 
-- **Multiple LLM Providers**: Support for Claude, ChatGPT, and Gemini
-- **Tarot Master Personas**: 3 unique personas with interaction-based relationships
-  - 달빛의 현자 (Sage of Moonlight): Philosophical & psychological insights (Claude)
-  - 별빛의 안내자 (Starlight Guide): Warm, empathetic & practical advice (ChatGPT)
-  - 운명의 해석자 (Destiny Interpreter): Intuitive, mystical & creative storytelling (Gemini)
-- **Comprehensive Tarot Database**: Complete 78-card deck with Korean interpretations
-- **RAG System**: Context-aware retrieval with love, finance, career, and health meanings
-- **Session Management**: Track user interactions and build relationships
-- **Multiple Spread Types**: Single card, three-card, Celtic Cross, and more
-- **RESTful API**: FastAPI-based with automatic API documentation
+## ✨ Features
+
+### 🔮 3명의 타로마스터 페르소나
+- **달빛의 현자** (Claude Sonnet 4.5): 심리학적 깊이 있는 해석 | 역방향 ✓
+- **별빛의 안내자** (GPT-4 Turbo): 따뜻한 격려와 희망 | 정방향 전용
+- **운명의 해석자** (Gemini Pro): 신비로운 스토리텔링 | 역방향 ✓
+
+### 🤖 Multi-LLM 지원
+- Anthropic Claude (Sonnet 4.5)
+- OpenAI GPT-4 Turbo
+- Google Gemini Pro
+
+### 📚 RAG 기반 타로카드 시스템
+- 78장 완전한 타로카드 데이터베이스
+- 사랑, 재정, 직업, 건강 분야별 의미
+- 벡터 검색으로 컨텍스트 제공
+
+### 💬 관계 발전 시스템 (4단계)
+- **Formal** (1회): 정중하고 격식있는
+- **Polite** (2-5회): 부드러운 존댓말
+- **Friendly** (6-10회): 친근한 존댓말
+- **Intimate** (11+회): 편안한 반말 혼용
+
+### 🎯 고급 기능
+- 🔄 세션 관리 및 히스토리 추적
+- 🎲 정방향/역방향 설정 (마스터별)
+- ⚡ 2단계 프롬프트 최적화 (40-50% 토큰 절약)
+- 🃏 5가지 스프레드 타입 지원
+- 🔐 RESTful API with Swagger 문서
 
 ## Project Structure
 
@@ -52,29 +71,54 @@ unwoldam-api/
 └── README.md
 ```
 
-## Installation
+## 🚀 Quick Start
 
-1. Clone the repository:
+### Option 1: Docker (권장)
+
 ```bash
+# 1. 환경변수 설정
+cp .env.example .env
+# .env 파일을 열어 API 키 설정
+
+# 2. Docker Compose로 실행
+docker-compose up -d
+
+# 3. API 접속
+open http://localhost:8000/docs
+```
+
+### Option 2: 로컬 개발
+
+```bash
+# 1. 저장소 클론
 git clone <repository-url>
 cd TarotLLM
-```
 
-2. Create a virtual environment:
-```bash
+# 2. 가상 환경 생성
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-3. Install dependencies:
-```bash
+# 3. 의존성 설치
 pip install -r requirements.txt
+
+# 4. 환경변수 설정
+cp .env.example .env
+# .env 파일을 열어 API 키 설정
+
+# 5. 서버 실행
+python -m app.main
+# 또는: uvicorn app.main:app --reload
 ```
 
-4. Set up environment variables:
+### Option 3: Redis 없이 실행
+
+Redis가 없어도 메모리 기반 세션 관리로 정상 작동합니다:
+
 ```bash
-cp .env.example .env
-# Edit .env and add your API keys
+# .env에서 REDIS_URL 주석 처리
+# REDIS_URL=redis://localhost:6379/0
+
+python -m app.main
 ```
 
 ## Configuration
@@ -309,72 +353,93 @@ response = await llm_service.generate(
 
 See [Persona System Guide (Korean)](docs/PERSONA_SYSTEM_GUIDE_KR.md) for detailed documentation.
 
-## Development Roadmap
+## 📋 Development Roadmap
 
-### Phase 1: Core Setup ✅
-- [x] Project structure
-- [x] Basic models and services
-- [x] LLM provider integration
-- [x] Tarot master personas
-- [x] API endpoints
+### ✅ Phase 1-10: 핵심 시스템 완료
 
-### Phase 2: Data & RAG ✅
-- [x] Complete 78-card tarot deck data (22 Major + 56 Minor Arcana)
-- [x] Comprehensive Korean tarot database with detailed interpretations
-- [x] Context-specific meanings (love, finance, career, health, etc.)
-- [x] Enhanced RAG service with search and filtering
-- [x] Symbolism, numerology, and guidance for each card
-- [ ] Vector database integration (future)
-- [ ] Advanced semantic search (future)
-- [ ] Card relationship analysis (future)
+#### Phase 1: 프로젝트 구조 설계 ✅
+- [x] 프로젝트 아키텍처 설계
+- [x] 기본 모델 및 서비스 구조
+- [x] FastAPI 기반 API 설계
 
-### Phase 3: LLM Provider Abstraction ✅
-- [x] Abstract base class for LLM providers
-- [x] Claude provider (claude-sonnet-4-5-20250929)
-- [x] OpenAI provider (gpt-4-turbo)
-- [x] Gemini provider (gemini-pro)
-- [x] Easy provider switching via configuration
-- [x] Streaming response support
-- [x] Comprehensive Korean documentation
-- [x] Provider fallback mechanism support
+#### Phase 2: 78장 타로카드 데이터베이스 ✅
+- [x] 메이저 아르카나 22장
+- [x] 마이너 아르카나 56장
+- [x] 한국어 의미 데이터베이스
+- [x] 사랑, 재정, 직업, 건강별 의미
 
-### Phase 4: RAG System ✅
-- [x] ChromaDB vector database integration
-- [x] Embedding service (OpenAI + local models)
-- [x] 312-document indexing (78 cards × 4 contexts)
-- [x] Semantic search functionality
-- [x] Context-aware retrieval (love, finance, career, health)
-- [x] RAG-enhanced context generation
-- [x] Card filtering and similarity search
-- [x] Comprehensive Korean documentation
+#### Phase 3: LLM 프로바이더 추상화 ✅
+- [x] Base 추상 클래스
+- [x] Claude (Sonnet 4.5)
+- [x] OpenAI (GPT-4 Turbo)
+- [x] Gemini (Pro)
+- [x] 스트리밍 지원
 
-### Phase 5: Tarot Master Persona System ✅
-- [x] 3 distinct tarot master personas with unique characteristics
-- [x] 달빛의 현자 (Sage of Moonlight): Philosophical & psychological insights
-- [x] 별빛의 안내자 (Starlight Guide): Warm, empathetic & practical advice
-- [x] 운명의 해석자 (Destiny Interpreter): Intuitive, mystical & creative storytelling
-- [x] Interaction-based relationship system (4 tiers: 0, 1-4, 5-9, 10+ meetings)
-- [x] Progressive speech pattern evolution with interaction count
-- [x] LLM provider recommendations per persona
-- [x] Configurable reversed card interpretation
-- [x] Comprehensive Korean documentation
+#### Phase 4: RAG 시스템 구축 ✅
+- [x] ChromaDB 벡터 데이터베이스
+- [x] 임베딩 서비스
+- [x] 312개 문서 인덱싱
+- [x] 시맨틱 검색
+- [x] 컨텍스트 인식 검색
 
-### Phase 6: Session & Memory
-- [ ] Database integration
-- [ ] Persistent session storage
-- [ ] Conversation history
-- [ ] User preferences
+#### Phase 5: 타로마스터 페르소나 시스템 ✅
+- [x] 3명의 독특한 페르소나
+- [x] 만남 횟수 기반 관계 발전 (4단계)
+- [x] 말투 변화 시스템
+- [x] LLM 프로바이더 추천
 
-### Phase 7: TTS/STT
-- [ ] Text-to-Speech integration
-- [ ] Speech-to-Text integration
-- [ ] Voice-based readings
+#### Phase 6: 2단계 프롬프트 최적화 시스템 ✅
+- [x] SHORT/DETAILED 프롬프트
+- [x] 40-50% 토큰 절약
+- [x] 자동 복잡도 평가
+- [x] 상황별 프롬프트 선택
 
-### Phase 8: Advanced Features
-- [ ] Custom spread builder
-- [ ] Reading insights and analytics
-- [ ] Multi-language support
-- [ ] Mobile app integration
+#### Phase 7: API 엔드포인트 구현 ✅
+- [x] POST /api/v1/tarot/reading
+- [x] GET /api/v1/tarot/masters
+- [x] POST /api/v1/tarot/session
+- [x] GET /api/v1/tarot/session/{user_id}
+- [x] GET /api/v1/tarot/spreads
+
+#### Phase 8: 세션 관리 시스템 ✅
+- [x] Redis 기반 세션 저장
+- [x] 타로마스터별 만남 횟수 추적
+- [x] 관계 레벨 시스템 (4단계)
+- [x] 리딩 히스토리 관리
+- [x] 메모리 폴백 시스템
+
+#### Phase 9: 정방향/역방향 설정 관리 ✅
+- [x] 타로마스터별 독립 설정
+- [x] 자동 카드 뽑기 시 적용
+- [x] 수동 카드 선택 시 적용
+- [x] 역방향 미지원 시 정방향 강제 전환
+
+#### Phase 10: 통합 및 테스트 ✅
+- [x] FastAPI 애플리케이션 초기화
+- [x] 환경변수 설정 (.env)
+- [x] 통합 테스트 시나리오 (6가지)
+- [x] Docker 컨테이너화
+- [x] API 문서 자동 생성
+- [x] README 완성
+
+### 🔮 향후 계획
+
+#### Phase 11: 프로덕션 배포
+- [ ] 클라우드 배포 (AWS/GCP/Azure)
+- [ ] CI/CD 파이프라인
+- [ ] 모니터링 및 로깅
+- [ ] 성능 최적화
+
+#### Phase 12: 고급 기능
+- [ ] 커스텀 스프레드 빌더
+- [ ] 리딩 인사이트 및 분석
+- [ ] 다국어 지원
+- [ ] 모바일 앱 통합
+
+#### Phase 13: TTS/STT
+- [ ] 음성 기반 리딩
+- [ ] Text-to-Speech
+- [ ] Speech-to-Text
 
 ## Technologies
 

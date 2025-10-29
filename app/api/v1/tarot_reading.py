@@ -4,7 +4,7 @@ Complete implementation with optimized prompt system
 """
 
 from fastapi import APIRouter, HTTPException, status
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import uuid
 
