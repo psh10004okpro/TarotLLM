@@ -1,9 +1,9 @@
 """
 Tarot Master Service
-Manages tarot master personas and reading generation
+Manages tarot master personas and reading generation with optimized prompt system
 """
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 import random
 from datetime import datetime
 from app.models.tarot_card import DrawnCard, TarotCard, CardOrientation
@@ -11,6 +11,12 @@ from app.models.reading import ReadingRequest, ReadingResponse, SpreadType
 from app.core.personas.tarot_master_1 import TarotMaster1
 from app.core.personas.tarot_master_2 import TarotMaster2
 from app.core.personas.tarot_master_3 import TarotMaster3
+from app.core.personas.prompt_manager import (
+    TarotMasterPrompts,
+    PromptLevel,
+    get_master_prompt,
+    assess_question
+)
 from app.services.llm_service import llm_service
 from app.services.rag_service import rag_service
 from app.services.session_service import session_service
@@ -98,15 +104,20 @@ class TarotMasterService:
         }
         return positions.get(spread_type, [])
 
-    async def generate_reading(self, request: ReadingRequest) -> ReadingResponse:
+    async def generate_reading(
+        self,
+        request: ReadingRequest,
+        use_optimized_prompts: bool = True
+    ) -> ReadingResponse:
         """
-        Generate a complete tarot reading
+        Generate a complete tarot reading with optimized prompt system
 
         Args:
             request: Reading request
+            use_optimized_prompts: Use new 2-stage prompt system (default: True)
 
         Returns:
-            Complete reading response
+            Complete reading response with prompt metadata
         """
         # Get or create session
         session = await session_service.get_or_create_session(request.user_id)
@@ -122,20 +133,34 @@ class TarotMasterService:
         card_ids = [dc.card.id for dc in drawn_cards]
         card_context = rag_service.get_context_for_reading(card_ids, request.question)
 
+        # Determine LLM provider
+        llm_provider = request.llm_provider or session.preferred_llm_provider or "claude"
+
+        # Generate system prompt using new prompt manager
+        if use_optimized_prompts:
+            system_prompt, prompt_level, tokens = self._get_optimized_prompt(
+                persona_id=persona_id,
+                session=session,
+                request=request,
+                drawn_cards=drawn_cards,
+                card_context=card_context
+            )
+        else:
+            # Fallback to old system
+            system_prompt = persona.get_system_prompt(session.interaction_count)
+            prompt_level = PromptLevel.SHORT
+            tokens = TarotMasterPrompts.estimate_tokens(system_prompt)
+
         # Build reading prompt
         reading_prompt = self._build_reading_prompt(
             drawn_cards,
             request.question,
             request.spread_type,
-            session.interaction_count
+            session.interaction_count,
+            card_context
         )
 
-        # Get system prompt from persona
-        system_prompt = persona.get_system_prompt(session.interaction_count)
-
         # Generate interpretation using LLM
-        llm_provider = request.llm_provider or session.preferred_llm_provider or "claude"
-
         interpretation = await llm_service.generate_with_context(
             prompt=reading_prompt,
             context=card_context,
@@ -159,14 +184,85 @@ class TarotMasterService:
             tarot_master_id=persona_id
         )
 
+        # Add prompt metadata if available
+        if hasattr(reading_response, 'metadata'):
+            reading_response.metadata = {
+                "prompt_level": prompt_level.value if isinstance(prompt_level, PromptLevel) else prompt_level,
+                "prompt_tokens": tokens,
+                "optimized_prompts": use_optimized_prompts
+            }
+
         return reading_response
+
+    def _get_optimized_prompt(
+        self,
+        persona_id: int,
+        session,
+        request: ReadingRequest,
+        drawn_cards: List[DrawnCard],
+        card_context: str
+    ) -> tuple[str, PromptLevel, int]:
+        """
+        Get optimized system prompt using 2-stage prompt system
+
+        Args:
+            persona_id: Tarot master persona ID
+            session: User session
+            request: Reading request
+            drawn_cards: Drawn cards
+            card_context: RAG context
+
+        Returns:
+            (system_prompt, prompt_level, estimated_tokens) tuple
+        """
+        # Map persona ID to master_id
+        master_id = f"master_{persona_id}"
+
+        # Assess question complexity
+        question = request.question or "타로 리딩을 해주세요"
+        analysis = assess_question(question, drawn_cards)
+
+        # Determine if first message
+        is_first_message = (session.interaction_count == 0)
+
+        # Get user name from session
+        user_name = getattr(session, 'user_name', None) or "내담자"
+
+        # Determine prompt level
+        prompt_level = TarotMasterPrompts.should_use_detailed(
+            is_first_message=is_first_message,
+            message_count=session.interaction_count,
+            complexity=analysis["complexity"],
+            card_count=analysis["card_count"],
+            has_specific_context=analysis["has_specific_context"]
+        )
+
+        # Prepare context for prompt
+        context = {
+            "meeting_count": session.interaction_count + 1,
+            "user_name": user_name,
+            "interpret_reversed": getattr(persona_id, 'supports_reversed', True)
+        }
+
+        # Get prompt
+        system_prompt = TarotMasterPrompts.get_prompt(
+            master_id=master_id,
+            level=prompt_level,
+            context=context
+        )
+
+        # Estimate tokens
+        tokens = TarotMasterPrompts.estimate_tokens(system_prompt)
+
+        return system_prompt, prompt_level, tokens
 
     def _build_reading_prompt(
         self,
         cards: List[DrawnCard],
         question: Optional[str],
         spread_type: SpreadType,
-        interaction_count: int
+        interaction_count: int,
+        card_context: Optional[str] = None
     ) -> str:
         """Build prompt for reading interpretation"""
         prompt = f"Tarot Reading - {spread_type.value.replace('_', ' ').title()}\n\n"
@@ -178,6 +274,9 @@ class TarotMasterService:
         for card in cards:
             position_str = f" ({card.position})" if card.position else ""
             prompt += f"- {card.card.name} ({card.card.name_ko}){position_str} - {card.orientation.value}\n"
+
+        if card_context:
+            prompt += f"\n\nCard Meanings (RAG Context):\n{card_context}\n"
 
         prompt += "\nProvide a detailed, insightful interpretation of this reading."
 
