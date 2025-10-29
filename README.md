@@ -2,7 +2,21 @@
 
 AI-powered Tarot Card Reading API with multiple LLM providers and diverse tarot master personas.
 
-**Phase 1-10 완료** ✅ | Version 1.0.0 | [API Documentation](http://localhost:8000/docs)
+**Phase 1-11 완료** ✅ | Version 1.1.0 | [API Documentation](http://localhost:8000/docs)
+
+[![Tests](https://img.shields.io/badge/tests-70%2F70%20passing-success)](docs/TESTING.md)
+[![Security](https://img.shields.io/badge/security-rate%20limiting%20%7C%20CORS%20%7C%20sanitization-blue)](docs/SECURITY.md)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)]()
+[![FastAPI](https://img.shields.io/badge/FastAPI-latest-green)]()
+
+## 📚 Documentation
+
+- [보안 및 품질 가이드](docs/SECURITY.md) - 보안 기능, 테스트, 의존성 관리
+- [테스트 가이드](docs/TESTING.md) - 70개 단위 테스트 상세 설명
+- [API 문서](http://localhost:8000/docs) - 대화형 Swagger UI
+- [LLM Provider 가이드](docs/LLM_PROVIDER_GUIDE_KR.md) - LLM 프로바이더 사용법
+- [RAG 시스템 가이드](docs/RAG_SYSTEM_GUIDE_KR.md) - 벡터 검색 상세 가이드
+- [Persona 시스템 가이드](docs/PERSONA_SYSTEM_GUIDE_KR.md) - 타로마스터 페르소나
 
 ## ✨ Features
 
@@ -33,6 +47,16 @@ AI-powered Tarot Card Reading API with multiple LLM providers and diverse tarot 
 - ⚡ 2단계 프롬프트 최적화 (40-50% 토큰 절약)
 - 🃏 5가지 스프레드 타입 지원
 - 🔐 RESTful API with Swagger 문서
+
+### 🛡️ 보안 및 품질 (Phase 11)
+- ✅ **Rate Limiting**: API 남용 방지 (10-20 req/min)
+- ✅ **CORS 제한**: 허용된 origin만 접근
+- ✅ **Input Sanitization**: Prompt injection, XSS 방어
+- ✅ **프로덕션 로깅**: 구조화된 로깅 시스템
+- ✅ **테스트 Coverage**: 70개 단위 테스트 (100% 통과)
+- ✅ **최신 의존성**: chromadb 1.2.1, sentence-transformers 5.1.2
+
+📖 **자세한 내용**: [보안 가이드](docs/SECURITY.md) | [테스트 가이드](docs/TESTING.md)
 
 ## Project Structure
 
@@ -531,19 +555,29 @@ See [Persona System Guide (Korean)](docs/PERSONA_SYSTEM_GUIDE_KR.md) for detaile
 
 ### 🔮 향후 계획
 
-#### Phase 11: 프로덕션 배포
+#### Phase 11: 보안 및 품질 개선 ✅
+- [x] Rate limiting (slowapi)
+- [x] CORS 설정
+- [x] Input sanitization (prompt injection, XSS)
+- [x] 프로덕션 로깅 시스템
+- [x] 의존성 업데이트 (chromadb, sentence-transformers)
+- [x] 70개 단위 테스트 작성
+- [x] 문서화 개선
+
+#### Phase 12: 프로덕션 배포
 - [ ] 클라우드 배포 (AWS/GCP/Azure)
 - [ ] CI/CD 파이프라인
-- [ ] 모니터링 및 로깅
-- [ ] 성능 최적화
+- [ ] 모니터링 및 로깅 (Prometheus, Grafana)
+- [ ] 성능 최적화 및 부하 테스트
+- [ ] SSL/TLS 인증서
 
-#### Phase 12: 고급 기능
+#### Phase 13: 고급 기능
 - [ ] 커스텀 스프레드 빌더
 - [ ] 리딩 인사이트 및 분석
-- [ ] 다국어 지원
+- [ ] 다국어 지원 (영어, 일본어)
 - [ ] 모바일 앱 통합
 
-#### Phase 13: TTS/STT
+#### Phase 14: TTS/STT
 - [ ] 음성 기반 리딩
 - [ ] Text-to-Speech
 - [ ] Speech-to-Text
