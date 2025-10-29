@@ -5,10 +5,10 @@ AI-powered Tarot Card Reading API with multiple LLM providers and diverse tarot 
 ## Features
 
 - **Multiple LLM Providers**: Support for Claude, ChatGPT, and Gemini
-- **Tarot Master Personas**: 3 unique personas with different reading styles
-  - 현자 (The Wise Oracle): Compassionate spiritual guide
-  - 실용가 (The Practical Guide): Direct and solution-focused
-  - 신비가 (The Mystic Seer): Mysterious and intuitive prophet
+- **Tarot Master Personas**: 3 unique personas with interaction-based relationships
+  - 달빛의 현자 (Sage of Moonlight): Philosophical & psychological insights (Claude)
+  - 별빛의 안내자 (Starlight Guide): Warm, empathetic & practical advice (ChatGPT)
+  - 운명의 해석자 (Destiny Interpreter): Intuitive, mystical & creative storytelling (Gemini)
 - **Comprehensive Tarot Database**: Complete 78-card deck with Korean interpretations
 - **RAG System**: Context-aware retrieval with love, finance, career, and health meanings
 - **Session Management**: Track user interactions and build relationships
@@ -242,6 +242,73 @@ EMBEDDING_MODEL=text-embedding-3-small
 
 See [RAG System Guide (Korean)](docs/RAG_SYSTEM_GUIDE_KR.md) for detailed documentation.
 
+## Tarot Master Persona System
+
+The API features 3 distinct tarot master personas with interaction-based relationship building.
+
+### Three Unique Personas
+
+#### 1. 달빛의 현자 (Sage of Moonlight)
+- **Style**: Philosophical, psychological, profound
+- **Recommended LLM**: Claude
+- **Approach**: Deep analytical insights, Jungian psychology, explores conscious & unconscious
+- **Reversed Cards**: ✓ Supported (interprets both upright and reversed)
+
+#### 2. 별빛의 안내자 (Starlight Guide)
+- **Style**: Warm, empathetic, encouraging, practical
+- **Recommended LLM**: ChatGPT
+- **Approach**: Supportive guidance, practical advice, positive energy, emotional comfort
+- **Reversed Cards**: ✗ Upright only (focuses on positive perspectives)
+
+#### 3. 운명의 해석자 (Destiny Interpreter)
+- **Style**: Intuitive, mystical, poetic, storytelling
+- **Recommended LLM**: Gemini
+- **Approach**: Creative narratives, card connections, metaphorical language, cosmic perspective
+- **Reversed Cards**: ⚙️ Configurable (can be enabled or disabled)
+
+### Interaction-Based Relationships
+
+Each persona evolves their speech patterns and relationship style based on meeting count:
+
+| Meeting # | Relationship | Speech Style | Intimacy |
+|-----------|--------------|--------------|----------|
+| **1st (0)** | First meeting | Formal, respectful | Professional |
+| **2-5th** | Trust building | Friendly honorifics | Warm |
+| **6-10th** | Deep bond | Casual honorifics, uses name | Close friend |
+| **11+** | Soul companion | May use informal speech | Deep intimacy |
+
+### Quick Example
+
+```python
+from app.core.personas.tarot_master_1 import TarotMaster1
+
+# Initialize persona
+master = TarotMaster1()
+
+# First meeting (formal)
+greeting = master.get_greeting(interaction_count=0, user_name="민수")
+# "안녕하세요, 민수님. 저는 '달빛의 현자'입니다..."
+
+# 7th meeting (friendly)
+greeting = master.get_greeting(interaction_count=6, user_name="민수")
+# "민수님, 또 뵙게 되어 기쁩니다. 7번째 만남이네요..."
+
+# Generate context-aware system prompt
+system_prompt = master.get_system_prompt(
+    interaction_count=6,
+    user_name="민수"
+)
+
+# Use with LLM
+response = await llm_service.generate(
+    prompt=user_question,
+    system_prompt=system_prompt,
+    provider_name=master.recommended_llm  # "claude"
+)
+```
+
+See [Persona System Guide (Korean)](docs/PERSONA_SYSTEM_GUIDE_KR.md) for detailed documentation.
+
 ## Development Roadmap
 
 ### Phase 1: Core Setup ✅
@@ -281,18 +348,29 @@ See [RAG System Guide (Korean)](docs/RAG_SYSTEM_GUIDE_KR.md) for detailed docume
 - [x] Card filtering and similarity search
 - [x] Comprehensive Korean documentation
 
-### Phase 5: Session & Memory
+### Phase 5: Tarot Master Persona System ✅
+- [x] 3 distinct tarot master personas with unique characteristics
+- [x] 달빛의 현자 (Sage of Moonlight): Philosophical & psychological insights
+- [x] 별빛의 안내자 (Starlight Guide): Warm, empathetic & practical advice
+- [x] 운명의 해석자 (Destiny Interpreter): Intuitive, mystical & creative storytelling
+- [x] Interaction-based relationship system (4 tiers: 0, 1-4, 5-9, 10+ meetings)
+- [x] Progressive speech pattern evolution with interaction count
+- [x] LLM provider recommendations per persona
+- [x] Configurable reversed card interpretation
+- [x] Comprehensive Korean documentation
+
+### Phase 6: Session & Memory
 - [ ] Database integration
 - [ ] Persistent session storage
 - [ ] Conversation history
 - [ ] User preferences
 
-### Phase 6: TTS/STT
+### Phase 7: TTS/STT
 - [ ] Text-to-Speech integration
 - [ ] Speech-to-Text integration
 - [ ] Voice-based readings
 
-### Phase 7: Advanced Features
+### Phase 8: Advanced Features
 - [ ] Custom spread builder
 - [ ] Reading insights and analytics
 - [ ] Multi-language support
