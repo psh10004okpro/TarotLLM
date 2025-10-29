@@ -25,9 +25,9 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: Optional[str] = None
 
     # LLM Model Settings
-    CLAUDE_MODEL: str = "claude-3-5-sonnet-20241022"
-    OPENAI_MODEL: str = "gpt-4-turbo-preview"
-    GEMINI_MODEL: str = "gemini-1.5-pro"
+    CLAUDE_MODEL: str = "claude-sonnet-4-5-20250929"
+    OPENAI_MODEL: str = "gpt-4-turbo"
+    GEMINI_MODEL: str = "gemini-pro"
 
     # Default LLM Provider
     DEFAULT_LLM_PROVIDER: str = "claude"

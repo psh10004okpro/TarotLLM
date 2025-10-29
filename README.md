@@ -144,6 +144,54 @@ curl -X POST "http://localhost:8000/api/v1/reading" \
 curl "http://localhost:8000/api/v1/masters"
 ```
 
+## LLM Provider Configuration
+
+The API supports multiple LLM providers that can be easily switched via configuration.
+
+### Supported Providers
+
+- **Claude** (Anthropic): `claude-sonnet-4-5-20250929`
+- **GPT-4** (OpenAI): `gpt-4-turbo`
+- **Gemini** (Google): `gemini-pro`
+
+### Quick Start
+
+1. **Set up API keys** in `.env`:
+```bash
+ANTHROPIC_API_KEY=your_key_here
+OPENAI_API_KEY=your_key_here
+GOOGLE_API_KEY=your_key_here
+
+# Choose default provider
+DEFAULT_LLM_PROVIDER=claude
+```
+
+2. **Use in code**:
+```python
+from app.services.llm_service import llm_service
+
+# Use default provider
+response = await llm_service.generate_response(
+    prompt="Interpret this tarot card",
+    system_prompt="You are a tarot master"
+)
+
+# Or specify provider
+response = await llm_service.generate_response(
+    prompt="Interpret this tarot card",
+    provider_name="claude"  # or "openai", "gemini"
+)
+```
+
+### Advanced Usage
+
+See [LLM Provider Guide (Korean)](docs/LLM_PROVIDER_GUIDE_KR.md) for:
+- Streaming responses
+- RAG integration
+- Provider fallback
+- Error handling
+- Performance optimization
+
 ## Development Roadmap
 
 ### Phase 1: Core Setup ✅
@@ -163,18 +211,28 @@ curl "http://localhost:8000/api/v1/masters"
 - [ ] Advanced semantic search (future)
 - [ ] Card relationship analysis (future)
 
-### Phase 3: Session & Memory
+### Phase 3: LLM Provider Abstraction ✅
+- [x] Abstract base class for LLM providers
+- [x] Claude provider (claude-sonnet-4-5-20250929)
+- [x] OpenAI provider (gpt-4-turbo)
+- [x] Gemini provider (gemini-pro)
+- [x] Easy provider switching via configuration
+- [x] Streaming response support
+- [x] Comprehensive Korean documentation
+- [x] Provider fallback mechanism support
+
+### Phase 4: Session & Memory
 - [ ] Database integration
 - [ ] Persistent session storage
 - [ ] Conversation history
 - [ ] User preferences
 
-### Phase 4: TTS/STT
+### Phase 5: TTS/STT
 - [ ] Text-to-Speech integration
 - [ ] Speech-to-Text integration
 - [ ] Voice-based readings
 
-### Phase 5: Advanced Features
+### Phase 6: Advanced Features
 - [ ] Custom spread builder
 - [ ] Reading insights and analytics
 - [ ] Multi-language support
