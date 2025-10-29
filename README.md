@@ -192,6 +192,56 @@ See [LLM Provider Guide (Korean)](docs/LLM_PROVIDER_GUIDE_KR.md) for:
 - Error handling
 - Performance optimization
 
+## RAG System
+
+The API includes a powerful RAG (Retrieval-Augmented Generation) system using ChromaDB for semantic search of tarot card meanings.
+
+### Features
+
+- **Vector Search**: ChromaDB-based semantic search
+- **Embedding Support**: OpenAI or local sentence-transformers
+- **Context-Aware**: Search by love, finance, career, health contexts
+- **312 Documents**: 78 cards × 4 document types
+- **Intelligent Matching**: Finds relevant card interpretations
+
+### Quick Example
+
+```python
+from app.services.vector_store_service import vector_store
+from app.services.rag_service import rag_service
+
+# Index all cards (first time only)
+vector_store.index_all_cards()
+
+# Semantic search
+results = vector_store.search(
+    query="Will I find new love?",
+    context_type="love",
+    n_results=5
+)
+
+# Get RAG-enhanced context
+context = rag_service.get_context_for_reading(
+    cards=[0, 6, 19],  # The Fool, The Lovers, The Sun
+    question="Will I find new love?",
+    context_type="love",
+    use_vector_search=True  # Enable RAG!
+)
+```
+
+### Setup
+
+```bash
+# Install dependencies
+pip install chromadb sentence-transformers
+
+# Configure in .env
+VECTOR_STORE_PATH=./data/vector_store
+EMBEDDING_MODEL=text-embedding-3-small
+```
+
+See [RAG System Guide (Korean)](docs/RAG_SYSTEM_GUIDE_KR.md) for detailed documentation.
+
 ## Development Roadmap
 
 ### Phase 1: Core Setup ✅
@@ -221,18 +271,28 @@ See [LLM Provider Guide (Korean)](docs/LLM_PROVIDER_GUIDE_KR.md) for:
 - [x] Comprehensive Korean documentation
 - [x] Provider fallback mechanism support
 
-### Phase 4: Session & Memory
+### Phase 4: RAG System ✅
+- [x] ChromaDB vector database integration
+- [x] Embedding service (OpenAI + local models)
+- [x] 312-document indexing (78 cards × 4 contexts)
+- [x] Semantic search functionality
+- [x] Context-aware retrieval (love, finance, career, health)
+- [x] RAG-enhanced context generation
+- [x] Card filtering and similarity search
+- [x] Comprehensive Korean documentation
+
+### Phase 5: Session & Memory
 - [ ] Database integration
 - [ ] Persistent session storage
 - [ ] Conversation history
 - [ ] User preferences
 
-### Phase 5: TTS/STT
+### Phase 6: TTS/STT
 - [ ] Text-to-Speech integration
 - [ ] Speech-to-Text integration
 - [ ] Voice-based readings
 
-### Phase 6: Advanced Features
+### Phase 7: Advanced Features
 - [ ] Custom spread builder
 - [ ] Reading insights and analytics
 - [ ] Multi-language support

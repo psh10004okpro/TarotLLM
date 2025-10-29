@@ -17,7 +17,7 @@ class RAGService:
     def __init__(self):
         """Initialize RAG service"""
         self.cards_data: List[TarotCard] = []
-        self.vector_store = None  # To be implemented with actual vector DB
+        self.vector_store = None  # 순환 import 방지를 위해 lazy loading
         self._load_data()
 
     def _load_data(self):
@@ -211,7 +211,8 @@ class RAGService:
         self,
         cards: List[int],
         question: Optional[str] = None,
-        context_type: Optional[str] = None
+        context_type: Optional[str] = None,
+        use_vector_search: bool = False
     ) -> str:
         """
         Get contextual information for a reading
@@ -220,10 +221,30 @@ class RAGService:
             cards: List of card IDs
             question: User's question
             context_type: Reading context (love, finance, career, etc.)
+            use_vector_search: 벡터 검색을 사용할지 여부
 
         Returns:
             Context string for LLM
         """
+        # 벡터 검색 사용 시
+        if use_vector_search and question:
+            # Lazy loading vector store to avoid circular import
+            if self.vector_store is None:
+                try:
+                    from app.services.vector_store_service import vector_store
+                    self.vector_store = vector_store
+                except:
+                    pass
+
+            if self.vector_store and self.vector_store.collection:
+                return self.vector_store.get_context_for_cards(
+                    card_ids=cards,
+                    question=question,
+                    context_type=context_type,
+                    n_similar=3
+                )
+
+        # 기본 컨텍스트 생성 (벡터 검색 미사용 또는 실패 시)
         context = "타로 카드 정보:\n\n"
 
         for i, card_id in enumerate(cards, 1):
