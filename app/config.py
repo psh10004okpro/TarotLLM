@@ -17,7 +17,15 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
 
     # CORS Settings
-    ALLOWED_ORIGINS: List[str] = ["*"]
+    # NOTE: Update this list with your actual frontend domain(s)
+    # Default includes common development ports
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000",  # React/Next.js dev
+        "http://localhost:5173",  # Vite dev
+        "http://localhost:8080",  # Vue dev
+        # Add your production domain:
+        # "https://yourdomain.com",
+    ]
 
     # LLM Provider API Keys
     ANTHROPIC_API_KEY: Optional[str] = None

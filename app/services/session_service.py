@@ -7,13 +7,13 @@ from typing import Optional, Dict, List
 from datetime import datetime, timedelta
 import json
 import uuid
+import logging
 
 try:
     import redis
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
-    print("⚠️ Redis 모듈이 설치되지 않았습니다. 메모리 기반 저장소를 사용합니다.")
 
 from app.models.user_session import (
     UserSession,
@@ -23,6 +23,12 @@ from app.models.user_session import (
     SessionResponse
 )
 from app.config import settings
+
+logger = logging.getLogger(__name__)
+
+# Log Redis availability status
+if not REDIS_AVAILABLE:
+    logger.warning("Redis module not installed. Using in-memory storage.")
 
 
 class SessionService:
@@ -49,9 +55,9 @@ class SessionService:
                 self.redis_client = redis.Redis(**redis_kwargs)
                 # 연결 테스트
                 self.redis_client.ping()
-                print("✅ Redis 연결 성공")
-            except (redis.ConnectionError, redis.TimeoutError):
-                print("⚠️ Redis 서버에 연결할 수 없습니다. 메모리 기반 저장소를 사용합니다.")
+                logger.info("Redis connection successful")
+            except (redis.ConnectionError, redis.TimeoutError) as e:
+                logger.warning(f"Could not connect to Redis server: {e}. Using in-memory storage.")
                 self.use_redis = False
                 self.redis_client = None
 

@@ -4,6 +4,7 @@ uvicorn==0.27.0
 pydantic==2.5.0
 pydantic-settings==2.1.0
 python-multipart==0.0.6
+slowapi==0.1.9
 
 # Environment Configuration
 python-dotenv==1.0.0

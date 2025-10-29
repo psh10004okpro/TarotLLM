@@ -6,9 +6,12 @@ Enhanced for comprehensive Korean tarot database
 
 from typing import List, Dict, Any, Optional
 import json
+import logging
 from pathlib import Path
 from app.models.tarot_card import TarotCard, CardSuit
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class RAGService:
@@ -29,12 +32,10 @@ class RAGService:
                 with open(cards_path, "r", encoding="utf-8") as f:
                     cards_json = json.load(f)
                     self.cards_data = [TarotCard(**card) for card in cards_json]
-                    print(f"✓ Loaded {len(self.cards_data)} tarot cards")
+                    logger.info(f"Loaded {len(self.cards_data)} tarot cards")
 
         except Exception as e:
-            print(f"Warning: Could not load tarot data: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Could not load tarot data: {e}", exc_info=True)
 
     def get_card_by_id(self, card_id: int) -> Optional[TarotCard]:
         """Get card by ID"""

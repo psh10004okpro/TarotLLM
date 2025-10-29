@@ -8,6 +8,9 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from app.config import settings
 from app.api.v1 import tarot_reading, tarot_master
 from app.services.rag_service import rag_service
@@ -20,6 +23,9 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Rate limiter 설정
+limiter = Limiter(key_func=get_remote_address)
 
 
 @asynccontextmanager
@@ -119,6 +125,10 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc"
 )
+
+# Rate limiter 설정
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Global exception handler
 @app.exception_handler(Exception)

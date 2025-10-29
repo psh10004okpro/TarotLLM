@@ -3,10 +3,12 @@ Tarot Reading API Endpoints - Phase 7
 Complete implementation with optimized prompt system
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import uuid
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.models.reading import (
     ReadingRequest,
@@ -24,12 +26,15 @@ from app.services.rag_service import rag_service
 from app.services.llm_service import llm_service
 from app.core.personas.prompt_manager import get_master_prompt, assess_question
 from app.config import TAROT_MASTERS
+from app.utils.security import sanitize_llm_prompt, sanitize_user_name
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 
 @router.post("/reading", response_model=ReadingResponse, status_code=status.HTTP_200_OK)
-async def create_tarot_reading(request: ReadingRequest):
+@limiter.limit("10/minute")
+async def create_tarot_reading(http_request: Request, request: ReadingRequest):
     """
     Create a new tarot reading with optimized prompt system
 
@@ -85,7 +90,8 @@ async def create_tarot_reading(request: ReadingRequest):
 
         # 5. Get card context from RAG
         card_ids = [dc.card.id for dc in drawn_cards]
-        concern = request.concern or "타로 리딩을 해주세요"
+        # Sanitize user input to prevent prompt injection
+        concern = sanitize_llm_prompt(request.concern) if request.concern else "타로 리딩을 해주세요"
 
         # Assess question complexity
         analysis = assess_question(concern, drawn_cards)
@@ -100,7 +106,7 @@ async def create_tarot_reading(request: ReadingRequest):
 
         # 6. Generate optimized prompt
         is_first_message = (meeting_count == 0)
-        user_name = getattr(session, 'user_name', None) or "내담자"
+        user_name = sanitize_user_name(getattr(session, 'user_name', None))
 
         system_prompt, prompt_level = get_master_prompt(
             master_id=master_id,
@@ -211,7 +217,8 @@ async def list_tarot_masters():
 
 
 @router.post("/session", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
-async def create_session(request: SessionRequest):
+@limiter.limit("20/minute")
+async def create_session(http_request: Request, request: SessionRequest):
     """
     Create or get user session for tracking meetings
 
