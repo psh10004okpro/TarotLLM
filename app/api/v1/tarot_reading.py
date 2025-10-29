@@ -71,9 +71,9 @@ async def create_tarot_reading(request: ReadingRequest):
         # 2. Get or create session
         session = await session_service.get_or_create_session(request.user_id)
 
-        # 3. Get meeting count for this specific tarot master
+        # 3. Get meeting count for this specific tarot master (Phase 8)
         master_id = request.tarot_master
-        meeting_count = getattr(session, f'{master_id}_count', 0)
+        meeting_count = session_service.get_meeting_count(request.user_id, master_id)
 
         # 4. Process cards (manual selection or auto-draw)
         if request.cards:
@@ -133,12 +133,15 @@ async def create_tarot_reading(request: ReadingRequest):
             max_tokens=2000
         )
 
-        # 10. Update session (increment meeting count)
+        # 10. Update session (Phase 8: Track per-master meeting count)
         await session_service.increment_interaction(session.session_id)
-        # TODO: Track per-master meeting count
+        await session_service.increment_meeting_count(request.user_id, master_id)
 
         # 11. Build response
         reading_id = f"reading_{uuid.uuid4().hex[:12]}"
+
+        # 12. Add reading to history (Phase 8)
+        session_service.add_reading_to_history(request.user_id, master_id, reading_id)
 
         tarot_master_info = TarotMasterInfo(
             id=master_id,
@@ -241,11 +244,11 @@ async def create_session(request: SessionRequest):
         if request.tarot_master:
             session.preferred_tarot_master = request.tarot_master
 
-        # Build meeting count dict
+        # Build meeting count dict (Phase 8: Use session service)
         tarot_master_meetings = {
-            "master_1": getattr(session, 'master_1_count', 0),
-            "master_2": getattr(session, 'master_2_count', 0),
-            "master_3": getattr(session, 'master_3_count', 0)
+            "master_1": session_service.get_meeting_count(request.user_id, "master_1"),
+            "master_2": session_service.get_meeting_count(request.user_id, "master_2"),
+            "master_3": session_service.get_meeting_count(request.user_id, "master_3")
         }
 
         response = SessionResponse(
@@ -290,10 +293,11 @@ async def get_session(user_id: str):
                 detail=f"Session not found for user: {user_id}"
             )
 
+        # Get meeting counts (Phase 8: Use session service)
         tarot_master_meetings = {
-            "master_1": getattr(session, 'master_1_count', 0),
-            "master_2": getattr(session, 'master_2_count', 0),
-            "master_3": getattr(session, 'master_3_count', 0)
+            "master_1": session_service.get_meeting_count(user_id, "master_1"),
+            "master_2": session_service.get_meeting_count(user_id, "master_2"),
+            "master_3": session_service.get_meeting_count(user_id, "master_3")
         }
 
         response = SessionResponse(

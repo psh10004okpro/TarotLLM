@@ -1,11 +1,20 @@
 """
-Session Service
-Manages user sessions and interaction tracking
+세션 관리 서비스 - Phase 8
+Redis 기반으로 사용자별, 타로마스터별 만남 횟수 추적
 """
 
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from datetime import datetime, timedelta
+import json
 import uuid
+
+try:
+    import redis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+    print("⚠️ Redis 모듈이 설치되지 않았습니다. 메모리 기반 저장소를 사용합니다.")
+
 from app.models.user_session import (
     UserSession,
     SessionStatus,
@@ -17,30 +26,270 @@ from app.config import settings
 
 
 class SessionService:
-    """Service for managing user sessions"""
+    """Redis 기반 세션 관리 서비스"""
 
     def __init__(self):
-        """Initialize session service"""
-        # In-memory storage (replace with database in production)
-        self.sessions: Dict[str, UserSession] = {}
-        self.user_sessions: Dict[str, list] = {}  # user_id -> [session_ids]
+        """세션 서비스 초기화"""
+        self.redis_client = None
+        self.use_redis = REDIS_AVAILABLE
+
+        if REDIS_AVAILABLE:
+            try:
+                # Redis 연결 시도 (로컬 개발 환경)
+                self.redis_client = redis.Redis(
+                    host='localhost',
+                    port=6379,
+                    db=0,
+                    decode_responses=True,
+                    socket_connect_timeout=1
+                )
+                # 연결 테스트
+                self.redis_client.ping()
+                print("✅ Redis 연결 성공")
+            except (redis.ConnectionError, redis.TimeoutError):
+                print("⚠️ Redis 서버에 연결할 수 없습니다. 메모리 기반 저장소를 사용합니다.")
+                self.use_redis = False
+                self.redis_client = None
+
+        # 메모리 기반 폴백 저장소
+        if not self.use_redis:
+            self.sessions: Dict[str, UserSession] = {}
+            self.user_sessions: Dict[str, list] = {}
+            # 타로마스터별 만남 횟수 저장
+            self.master_meetings: Dict[str, Dict[str, int]] = {}
+
+    # ========================================================================
+    # Phase 8: 타로마스터별 만남 횟수 추적
+    # ========================================================================
+
+    def get_meeting_count(self, user_id: str, master_id: str) -> int:
+        """
+        특정 타로마스터와의 만남 횟수 조회
+
+        Args:
+            user_id: 사용자 ID
+            master_id: 타로마스터 ID (master_1, master_2, master_3)
+
+        Returns:
+            만남 횟수 (정수)
+        """
+        if self.use_redis and self.redis_client:
+            # Redis에서 조회
+            key = f"user:{user_id}:master:{master_id}"
+            data = self.redis_client.get(key)
+
+            if data:
+                session_data = json.loads(data)
+                return session_data.get("meeting_count", 0)
+            return 0
+        else:
+            # 메모리에서 조회
+            key = f"{user_id}:{master_id}"
+            if key in self.master_meetings:
+                return self.master_meetings[key].get("meeting_count", 0)
+            return 0
+
+    async def increment_meeting_count(self, user_id: str, master_id: str) -> int:
+        """
+        특정 타로마스터와의 만남 횟수 증가
+
+        Args:
+            user_id: 사용자 ID
+            master_id: 타로마스터 ID
+
+        Returns:
+            증가된 만남 횟수
+        """
+        now = datetime.now().isoformat()
+
+        if self.use_redis and self.redis_client:
+            # Redis 업데이트
+            key = f"user:{user_id}:master:{master_id}"
+            data = self.redis_client.get(key)
+
+            if data:
+                session_data = json.loads(data)
+                session_data["meeting_count"] += 1
+                session_data["last_met"] = now
+                session_data["reading_history"] = session_data.get("reading_history", [])
+            else:
+                # 첫 만남
+                session_data = {
+                    "meeting_count": 1,
+                    "first_met": now,
+                    "last_met": now,
+                    "reading_history": []
+                }
+
+            # Redis에 저장 (만료 시간: 90일)
+            self.redis_client.setex(
+                key,
+                timedelta(days=90),
+                json.dumps(session_data, ensure_ascii=False)
+            )
+
+            return session_data["meeting_count"]
+        else:
+            # 메모리 업데이트
+            key = f"{user_id}:{master_id}"
+
+            if key in self.master_meetings:
+                self.master_meetings[key]["meeting_count"] += 1
+                self.master_meetings[key]["last_met"] = now
+            else:
+                self.master_meetings[key] = {
+                    "meeting_count": 1,
+                    "first_met": now,
+                    "last_met": now,
+                    "reading_history": []
+                }
+
+            return self.master_meetings[key]["meeting_count"]
+
+    def add_reading_to_history(self, user_id: str, master_id: str, reading_id: str):
+        """
+        리딩 기록 추가
+
+        Args:
+            user_id: 사용자 ID
+            master_id: 타로마스터 ID
+            reading_id: 리딩 ID
+        """
+        if self.use_redis and self.redis_client:
+            key = f"user:{user_id}:master:{master_id}"
+            data = self.redis_client.get(key)
+
+            if data:
+                session_data = json.loads(data)
+            else:
+                # 데이터가 없으면 초기화
+                now = datetime.now().isoformat()
+                session_data = {
+                    "meeting_count": 0,
+                    "first_met": now,
+                    "last_met": now,
+                    "reading_history": []
+                }
+
+            history = session_data.get("reading_history", [])
+            history.append(reading_id)
+
+            # 최근 100개만 유지
+            if len(history) > 100:
+                history = history[-100:]
+
+            session_data["reading_history"] = history
+
+            self.redis_client.setex(
+                key,
+                timedelta(days=90),
+                json.dumps(session_data, ensure_ascii=False)
+            )
+        else:
+            key = f"{user_id}:{master_id}"
+            # 키가 없으면 초기화
+            if key not in self.master_meetings:
+                now = datetime.now().isoformat()
+                self.master_meetings[key] = {
+                    "meeting_count": 0,
+                    "first_met": now,
+                    "last_met": now,
+                    "reading_history": []
+                }
+
+            history = self.master_meetings[key].get("reading_history", [])
+            history.append(reading_id)
+
+            # 최근 100개만 유지
+            if len(history) > 100:
+                history = history[-100:]
+
+            self.master_meetings[key]["reading_history"] = history
+
+    def get_relationship_level(self, meeting_count: int) -> str:
+        """
+        만남 횟수에 따른 관계 레벨 반환
+
+        Args:
+            meeting_count: 만남 횟수
+
+        Returns:
+            관계 레벨 문자열
+            - "formal": 1회 (정중하고 격식있는)
+            - "polite": 2-5회 (부드러운 존댓말)
+            - "friendly": 6-10회 (친근한 존댓말)
+            - "intimate": 11회 이상 (편안한 반말 혼용)
+        """
+        if meeting_count <= 1:
+            return "formal"
+        elif meeting_count <= 5:
+            return "polite"
+        elif meeting_count <= 10:
+            return "friendly"
+        else:
+            return "intimate"
+
+    def get_all_master_meetings(self, user_id: str) -> Dict[str, Dict]:
+        """
+        사용자의 모든 타로마스터별 만남 정보 조회
+
+        Args:
+            user_id: 사용자 ID
+
+        Returns:
+            타로마스터별 만남 정보 딕셔너리
+        """
+        result = {}
+
+        master_ids = ["master_1", "master_2", "master_3"]
+
+        for master_id in master_ids:
+            if self.use_redis and self.redis_client:
+                key = f"user:{user_id}:master:{master_id}"
+                data = self.redis_client.get(key)
+
+                if data:
+                    result[master_id] = json.loads(data)
+                else:
+                    result[master_id] = {
+                        "meeting_count": 0,
+                        "first_met": None,
+                        "last_met": None,
+                        "reading_history": []
+                    }
+            else:
+                key = f"{user_id}:{master_id}"
+                if key in self.master_meetings:
+                    result[master_id] = self.master_meetings[key]
+                else:
+                    result[master_id] = {
+                        "meeting_count": 0,
+                        "first_met": None,
+                        "last_met": None,
+                        "reading_history": []
+                    }
+
+        return result
+
+    # ========================================================================
+    # 기존 세션 관리 기능 (하위 호환성 유지)
+    # ========================================================================
 
     async def create_session(self, user_id: str) -> UserSession:
         """
-        Create a new session for user
+        새 세션 생성
 
         Args:
-            user_id: User identifier
+            user_id: 사용자 ID
 
         Returns:
-            Created session
+            생성된 세션
         """
         session_id = f"session_{uuid.uuid4().hex}"
 
-        # Calculate total interactions from previous sessions
+        # 전체 인터랙션 수 계산
         total_interactions = self._get_user_total_interactions(user_id)
 
-        # Create session
         session = UserSession(
             session_id=session_id,
             user_id=user_id,
@@ -52,57 +301,125 @@ class SessionService:
             total_interactions=total_interactions
         )
 
-        # Store session
-        self.sessions[session_id] = session
+        if self.use_redis and self.redis_client:
+            # Redis에 저장
+            key = f"session:{session_id}"
+            self.redis_client.setex(
+                key,
+                timedelta(hours=settings.SESSION_EXPIRY_HOURS),
+                json.dumps(session.dict(), default=str, ensure_ascii=False)
+            )
 
-        # Track user's sessions
-        if user_id not in self.user_sessions:
-            self.user_sessions[user_id] = []
-        self.user_sessions[user_id].append(session_id)
+            # 사용자 세션 목록 업데이트
+            user_key = f"user:{user_id}:sessions"
+            self.redis_client.rpush(user_key, session_id)
+        else:
+            # 메모리에 저장
+            self.sessions[session_id] = session
+
+            if user_id not in self.user_sessions:
+                self.user_sessions[user_id] = []
+            self.user_sessions[user_id].append(session_id)
 
         return session
 
     async def get_session(self, session_id: str) -> Optional[UserSession]:
         """
-        Get session by ID
+        세션 ID로 세션 조회
 
         Args:
-            session_id: Session identifier
+            session_id: 세션 ID
 
         Returns:
-            Session if found and active, None otherwise
+            세션 객체 또는 None
         """
-        session = self.sessions.get(session_id)
+        if self.use_redis and self.redis_client:
+            key = f"session:{session_id}"
+            data = self.redis_client.get(key)
 
-        if not session:
+            if data:
+                session_dict = json.loads(data)
+                session = UserSession(**session_dict)
+
+                # 만료 확인
+                if datetime.now() > session.expires_at:
+                    session.status = SessionStatus.EXPIRED
+                    return None
+
+                return session
             return None
+        else:
+            session = self.sessions.get(session_id)
 
-        # Check if expired
-        if datetime.now() > session.expires_at:
-            session.status = SessionStatus.EXPIRED
-            return None
+            if not session:
+                return None
 
-        return session
+            if datetime.now() > session.expires_at:
+                session.status = SessionStatus.EXPIRED
+                return None
+
+            return session
 
     async def get_or_create_session(self, user_id: str) -> UserSession:
         """
-        Get active session or create new one
+        활성 세션 조회 또는 새 세션 생성
 
         Args:
-            user_id: User identifier
+            user_id: 사용자 ID
 
         Returns:
-            Active session
+            활성 세션
         """
-        # Look for active session
-        if user_id in self.user_sessions:
-            for session_id in reversed(self.user_sessions[user_id]):
+        if self.use_redis and self.redis_client:
+            # Redis에서 사용자 세션 목록 조회
+            user_key = f"user:{user_id}:sessions"
+            session_ids = self.redis_client.lrange(user_key, -5, -1)  # 최근 5개
+
+            # 역순으로 확인 (최신부터)
+            for session_id in reversed(session_ids):
                 session = await self.get_session(session_id)
                 if session and session.status == SessionStatus.ACTIVE:
                     return session
+        else:
+            # 메모리에서 조회
+            if user_id in self.user_sessions:
+                for session_id in reversed(self.user_sessions[user_id]):
+                    session = await self.get_session(session_id)
+                    if session and session.status == SessionStatus.ACTIVE:
+                        return session
 
-        # Create new session
+        # 새 세션 생성
         return await self.create_session(user_id)
+
+    async def increment_interaction(self, session_id: str) -> Optional[UserSession]:
+        """
+        인터랙션 카운트 증가
+
+        Args:
+            session_id: 세션 ID
+
+        Returns:
+            업데이트된 세션
+        """
+        session = await self.get_session(session_id)
+        if not session:
+            return None
+
+        session.interaction_count += 1
+        session.total_interactions += 1
+        session.last_active = datetime.now()
+
+        if self.use_redis and self.redis_client:
+            key = f"session:{session_id}"
+            self.redis_client.setex(
+                key,
+                timedelta(hours=settings.SESSION_EXPIRY_HOURS),
+                json.dumps(session.dict(), default=str, ensure_ascii=False)
+            )
+        else:
+            self.sessions[session_id] = session
+
+        return session
 
     async def update_session(
         self,
@@ -110,20 +427,19 @@ class SessionService:
         update: SessionUpdate
     ) -> Optional[UserSession]:
         """
-        Update session
+        세션 업데이트
 
         Args:
-            session_id: Session identifier
-            update: Update data
+            session_id: 세션 ID
+            update: 업데이트 데이터
 
         Returns:
-            Updated session
+            업데이트된 세션
         """
         session = await self.get_session(session_id)
         if not session:
             return None
 
-        # Update fields
         if update.interaction_count is not None:
             session.interaction_count = update.interaction_count
 
@@ -138,60 +454,59 @@ class SessionService:
 
         session.last_active = datetime.now()
 
-        return session
-
-    async def update_interaction(self, session_id: str) -> Optional[UserSession]:
-        """
-        Increment interaction count
-
-        Args:
-            session_id: Session identifier
-
-        Returns:
-            Updated session
-        """
-        session = await self.get_session(session_id)
-        if not session:
-            return None
-
-        session.interaction_count += 1
-        session.total_interactions += 1
-        session.last_active = datetime.now()
+        if self.use_redis and self.redis_client:
+            key = f"session:{session_id}"
+            self.redis_client.setex(
+                key,
+                timedelta(hours=settings.SESSION_EXPIRY_HOURS),
+                json.dumps(session.dict(), default=str, ensure_ascii=False)
+            )
+        else:
+            self.sessions[session_id] = session
 
         return session
 
     async def close_session(self, session_id: str) -> bool:
         """
-        Close a session
+        세션 종료
 
         Args:
-            session_id: Session identifier
+            session_id: 세션 ID
 
         Returns:
-            True if closed successfully
+            성공 여부
         """
-        session = self.sessions.get(session_id)
+        session = await self.get_session(session_id)
         if session:
             session.status = SessionStatus.CLOSED
+
+            if self.use_redis and self.redis_client:
+                key = f"session:{session_id}"
+                self.redis_client.setex(
+                    key,
+                    timedelta(hours=1),  # 1시간 후 삭제
+                    json.dumps(session.dict(), default=str, ensure_ascii=False)
+                )
+            else:
+                self.sessions[session_id] = session
+
             return True
         return False
 
     async def get_session_response(self, user_id: str) -> SessionResponse:
         """
-        Get session with relationship context
+        관계 컨텍스트가 포함된 세션 응답
 
         Args:
-            user_id: User identifier
+            user_id: 사용자 ID
 
         Returns:
-            Session response with context
+            세션 응답
         """
         session = await self.get_or_create_session(user_id)
 
-        # Determine if returning user
         is_returning = session.total_interactions > 0
 
-        # Build relationship context
         context = self._build_relationship_context(session.total_interactions)
 
         return SessionResponse(
@@ -201,20 +516,34 @@ class SessionService:
         )
 
     def _get_user_total_interactions(self, user_id: str) -> int:
-        """Get total interactions for user across all sessions"""
-        if user_id not in self.user_sessions:
-            return 0
+        """모든 세션의 총 인터랙션 수 계산"""
+        if self.use_redis and self.redis_client:
+            user_key = f"user:{user_id}:sessions"
+            session_ids = self.redis_client.lrange(user_key, 0, -1)
 
-        total = 0
-        for session_id in self.user_sessions[user_id]:
-            session = self.sessions.get(session_id)
-            if session:
-                total += session.interaction_count
+            total = 0
+            for session_id in session_ids:
+                key = f"session:{session_id}"
+                data = self.redis_client.get(key)
+                if data:
+                    session_dict = json.loads(data)
+                    total += session_dict.get("interaction_count", 0)
 
-        return total
+            return total
+        else:
+            if user_id not in self.user_sessions:
+                return 0
+
+            total = 0
+            for session_id in self.user_sessions[user_id]:
+                session = self.sessions.get(session_id)
+                if session:
+                    total += session.interaction_count
+
+            return total
 
     def _build_relationship_context(self, total_interactions: int) -> str:
-        """Build relationship context based on interaction count"""
+        """인터랙션 수에 따른 관계 컨텍스트 생성"""
         if total_interactions == 0:
             return "첫 만남입니다. 환영합니다."
         elif total_interactions < 5:
@@ -227,18 +556,30 @@ class SessionService:
             return f"{total_interactions + 1}번째 만남... 우리는 이제 오랜 친구입니다."
 
     async def get_user_history(self, user_id: str) -> list:
-        """Get all sessions for a user"""
-        if user_id not in self.user_sessions:
-            return []
+        """사용자의 모든 세션 조회"""
+        if self.use_redis and self.redis_client:
+            user_key = f"user:{user_id}:sessions"
+            session_ids = self.redis_client.lrange(user_key, 0, -1)
 
-        sessions = []
-        for session_id in self.user_sessions[user_id]:
-            session = self.sessions.get(session_id)
-            if session:
-                sessions.append(session)
+            sessions = []
+            for session_id in session_ids:
+                session = await self.get_session(session_id)
+                if session:
+                    sessions.append(session)
 
-        return sessions
+            return sessions
+        else:
+            if user_id not in self.user_sessions:
+                return []
+
+            sessions = []
+            for session_id in self.user_sessions[user_id]:
+                session = self.sessions.get(session_id)
+                if session:
+                    sessions.append(session)
+
+            return sessions
 
 
-# Singleton instance
+# 싱글톤 인스턴스
 session_service = SessionService()

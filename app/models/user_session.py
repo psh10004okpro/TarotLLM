@@ -20,6 +20,7 @@ class UserSession(BaseModel):
     """User session model for tracking interactions"""
     session_id: str = Field(..., description="Unique session identifier")
     user_id: str = Field(..., description="User identifier")
+    user_name: Optional[str] = Field(None, description="User's name for personalized readings")
     created_at: datetime = Field(default_factory=datetime.now, description="Session creation time")
     last_active: datetime = Field(default_factory=datetime.now, description="Last activity time")
     expires_at: datetime = Field(..., description="Session expiration time")
