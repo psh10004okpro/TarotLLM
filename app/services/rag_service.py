@@ -1,6 +1,7 @@
 """
 RAG (Retrieval-Augmented Generation) Service
 Manages tarot card knowledge base and retrieval
+Enhanced for comprehensive Korean tarot database
 """
 
 from typing import List, Dict, Any, Optional
@@ -16,28 +17,24 @@ class RAGService:
     def __init__(self):
         """Initialize RAG service"""
         self.cards_data: List[TarotCard] = []
-        self.card_meanings: Dict[str, Any] = {}
         self.vector_store = None  # To be implemented with actual vector DB
         self._load_data()
 
     def _load_data(self):
         """Load tarot cards data from JSON files"""
         try:
-            # Load tarot cards
+            # Load comprehensive tarot cards
             cards_path = Path("app/data/tarot_cards.json")
             if cards_path.exists():
                 with open(cards_path, "r", encoding="utf-8") as f:
                     cards_json = json.load(f)
                     self.cards_data = [TarotCard(**card) for card in cards_json]
-
-            # Load card meanings
-            meanings_path = Path("app/data/card_meanings.json")
-            if meanings_path.exists():
-                with open(meanings_path, "r", encoding="utf-8") as f:
-                    self.card_meanings = json.load(f)
+                    print(f"✓ Loaded {len(self.cards_data)} tarot cards")
 
         except Exception as e:
             print(f"Warning: Could not load tarot data: {e}")
+            import traceback
+            traceback.print_exc()
 
     def get_card_by_id(self, card_id: int) -> Optional[TarotCard]:
         """Get card by ID"""
@@ -50,7 +47,7 @@ class RAGService:
         """Get card by name (English or Korean)"""
         name_lower = name.lower()
         for card in self.cards_data:
-            if card.name.lower() == name_lower or card.name_ko == name:
+            if name_lower in card.name.lower() or name in card.name_ko:
                 return card
         return None
 
@@ -74,7 +71,7 @@ class RAGService:
         Args:
             card_id: Card ID
             orientation: upright or reversed
-            context: Additional context (e.g., question type)
+            context: Additional context (e.g., love, finance, career)
 
         Returns:
             Detailed card meaning
@@ -83,28 +80,103 @@ class RAGService:
         if not card:
             return "Card not found"
 
-        # Get base meaning from card
-        meaning = f"{card.name} ({card.name_ko})\n\n"
-        meaning += f"Description: {card.description}\n\n"
+        # Build comprehensive meaning
+        meaning = f"【{card.name}】\n{card.name_ko}\n\n"
 
-        if orientation == "upright":
-            meaning += f"Keywords: {', '.join(card.keywords_upright)}\n"
-        else:
-            meaning += f"Keywords (Reversed): {', '.join(card.keywords_reversed)}\n"
+        # Add image description
+        if card.image_description:
+            meaning += f"이미지 설명:\n{card.image_description}\n\n"
 
-        # Add extended meanings if available
-        if str(card_id) in self.card_meanings:
-            card_detail = self.card_meanings[str(card_id)]
-            meaning += f"\n{card_detail.get(orientation, {}).get('meaning', '')}"
+        # Add keywords
+        if card.keywords:
+            meaning += f"키워드: {', '.join(card.keywords[:10])}\n\n"  # First 10 keywords
+
+        # Add context-specific interpretation
+        if context:
+            context_meanings = {
+                "love": ("연애", card.love),
+                "relationship": ("인간관계", card.relationship),
+                "finance": ("재물", card.finance),
+                "career": ("직업/학업", card.education_career_business),
+                "business": ("사업", card.education_career_business),
+                "reunion": ("재회", card.reunion),
+                "contract": ("계약", card.contract),
+                "travel": ("여행/이사", card.travel_moving),
+                "health": ("건강", card.health),
+                "job_change": ("이직", card.job_change)
+            }
+
+            if context in context_meanings:
+                ctx_name, ctx_meaning = context_meanings[context]
+                if ctx_meaning:
+                    meaning += f"[{ctx_name}]\n{ctx_meaning}\n\n"
+
+        # Add symbolism if no specific context
+        if not context and card.symbolism:
+            meaning += f"상징:\n{card.symbolism[:300]}...\n\n"
+
+        # Add advice
+        if card.advice:
+            meaning += f"조언:\n{card.advice}\n\n"
+
+        # Add orientation note
+        if orientation == "reversed":
+            meaning += "\n[역방향] 카드의 에너지가 반전되거나 내면화됩니다.\n"
+            if card.caution:
+                meaning += f"주의사항:\n{card.caution}\n"
 
         return meaning
+
+    def get_comprehensive_card_info(self, card_id: int) -> Dict[str, Any]:
+        """
+        Get all available information for a card
+
+        Args:
+            card_id: Card ID
+
+        Returns:
+            Dictionary with all card information
+        """
+        card = self.get_card_by_id(card_id)
+        if not card:
+            return {}
+
+        return {
+            "id": card.id,
+            "name": card.name,
+            "name_ko": card.name_ko,
+            "suit": card.suit.value,
+            "keywords": card.keywords,
+            "image_description": card.image_description,
+            "interpretations": {
+                "love": card.love,
+                "relationship": card.relationship,
+                "finance": card.finance,
+                "career": card.education_career_business,
+                "reunion": card.reunion,
+                "contract": card.contract,
+                "travel_moving": card.travel_moving,
+                "job_change": card.job_change,
+                "health": card.health
+            },
+            "symbolic": {
+                "places": card.places,
+                "mood": card.mood,
+                "numerology": card.numerology,
+                "symbolism": card.symbolism
+            },
+            "guidance": {
+                "advice": card.advice,
+                "caution": card.caution
+            }
+        }
 
     def search_cards(self, query: str) -> List[TarotCard]:
         """
         Search cards by keyword or theme
 
         Args:
-            query: Search query
+            query: Search query (Korean or English)
 
         Returns:
             List of matching cards
@@ -113,22 +185,24 @@ class RAGService:
         matching_cards = []
 
         for card in self.cards_data:
-            # Search in name
-            if query_lower in card.name.lower() or query_lower in card.name_ko:
+            # Search in card name
+            if query_lower in card.card.lower():
                 matching_cards.append(card)
                 continue
 
             # Search in keywords
-            if any(query_lower in keyword.lower() for keyword in card.keywords_upright):
+            if any(query in keyword for keyword in card.keywords):
                 matching_cards.append(card)
                 continue
 
-            if any(query_lower in keyword.lower() for keyword in card.keywords_reversed):
-                matching_cards.append(card)
-                continue
+            # Search in all text fields
+            searchable_text = " ".join([
+                card.love, card.relationship, card.finance,
+                card.education_career_business, card.places,
+                card.mood, card.advice
+            ]).lower()
 
-            # Search in description
-            if query_lower in card.description.lower():
+            if query_lower in searchable_text or query in searchable_text:
                 matching_cards.append(card)
 
         return matching_cards
@@ -136,7 +210,8 @@ class RAGService:
     def get_context_for_reading(
         self,
         cards: List[int],
-        question: Optional[str] = None
+        question: Optional[str] = None,
+        context_type: Optional[str] = None
     ) -> str:
         """
         Get contextual information for a reading
@@ -144,23 +219,55 @@ class RAGService:
         Args:
             cards: List of card IDs
             question: User's question
+            context_type: Reading context (love, finance, career, etc.)
 
         Returns:
             Context string for LLM
         """
-        context = "Tarot Card Context:\n\n"
+        context = "타로 카드 정보:\n\n"
 
-        for card_id in cards:
+        for i, card_id in enumerate(cards, 1):
             card = self.get_card_by_id(card_id)
             if card:
-                context += f"- {card.name} ({card.name_ko}): {card.description}\n"
-                context += f"  Upright: {', '.join(card.keywords_upright)}\n"
-                context += f"  Reversed: {', '.join(card.keywords_reversed)}\n\n"
+                context += f"{i}. {card.name} ({card.name_ko})\n"
+                context += f"   키워드: {', '.join(card.keywords[:5])}\n"
+
+                # Add context-specific meaning if specified
+                if context_type:
+                    interpretation = ""
+                    if context_type == "love":
+                        interpretation = card.love
+                    elif context_type == "finance":
+                        interpretation = card.finance
+                    elif context_type == "career":
+                        interpretation = card.education_career_business
+                    elif context_type == "health":
+                        interpretation = card.health
+
+                    if interpretation:
+                        context += f"   해석: {interpretation[:150]}...\n"
+
+                context += "\n"
 
         if question:
-            context += f"\nUser's Question: {question}\n"
+            context += f"\n질문: {question}\n"
+
+        if context_type:
+            context += f"상담 유형: {context_type}\n"
 
         return context
+
+    def get_statistics(self) -> Dict[str, Any]:
+        """Get statistics about loaded cards"""
+        stats = {
+            "total_cards": len(self.cards_data),
+            "major_arcana": len(self.get_cards_by_suit(CardSuit.MAJOR_ARCANA)),
+            "wands": len(self.get_cards_by_suit(CardSuit.WANDS)),
+            "cups": len(self.get_cards_by_suit(CardSuit.CUPS)),
+            "swords": len(self.get_cards_by_suit(CardSuit.SWORDS)),
+            "pentacles": len(self.get_cards_by_suit(CardSuit.PENTACLES))
+        }
+        return stats
 
     def reload_data(self):
         """Reload tarot data from files"""
