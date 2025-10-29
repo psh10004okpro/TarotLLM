@@ -4,9 +4,12 @@ OpenAI GPT API integration
 """
 
 import asyncio
+import logging
 from typing import Optional, AsyncIterator
 from app.core.llm_providers.base import BaseLLMProvider
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIProvider(BaseLLMProvider):
@@ -27,11 +30,12 @@ class OpenAIProvider(BaseLLMProvider):
             try:
                 from openai import AsyncOpenAI
                 self.client = AsyncOpenAI(api_key=self.api_key)
+                logger.info(f"OpenAI provider initialized with model: {self.model_name}")
             except ImportError:
-                print("Warning: openai package not installed")
+                logger.warning("openai package not installed")
                 self.client = None
             except Exception as e:
-                print(f"Warning: Failed to initialize OpenAI client: {e}")
+                logger.error(f"Failed to initialize OpenAI client: {e}", exc_info=True)
                 self.client = None
 
     def is_available(self) -> bool:

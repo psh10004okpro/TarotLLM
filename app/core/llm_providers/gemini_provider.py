@@ -4,9 +4,12 @@ Google Gemini API integration
 """
 
 import asyncio
+import logging
 from typing import Optional, AsyncIterator
 from app.core.llm_providers.base import BaseLLMProvider
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class GeminiProvider(BaseLLMProvider):
@@ -28,11 +31,12 @@ class GeminiProvider(BaseLLMProvider):
                 import google.generativeai as genai
                 genai.configure(api_key=self.api_key)
                 self.client = genai.GenerativeModel(self.model_name)
+                logger.info(f"Gemini provider initialized with model: {self.model_name}")
             except ImportError:
-                print("Warning: google-generativeai package not installed")
+                logger.warning("google-generativeai package not installed")
                 self.client = None
             except Exception as e:
-                print(f"Warning: Failed to initialize Gemini client: {e}")
+                logger.error(f"Failed to initialize Gemini client: {e}", exc_info=True)
                 self.client = None
 
     def is_available(self) -> bool:

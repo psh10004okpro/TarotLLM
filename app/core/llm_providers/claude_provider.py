@@ -4,9 +4,12 @@ Anthropic Claude API integration
 """
 
 import asyncio
+import logging
 from typing import Optional, AsyncIterator
 from app.core.llm_providers.base import BaseLLMProvider
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class ClaudeProvider(BaseLLMProvider):
@@ -27,11 +30,12 @@ class ClaudeProvider(BaseLLMProvider):
             try:
                 from anthropic import AsyncAnthropic
                 self.client = AsyncAnthropic(api_key=self.api_key)
+                logger.info(f"Claude provider initialized with model: {self.model_name}")
             except ImportError:
-                print("Warning: anthropic package not installed")
+                logger.warning("anthropic package not installed")
                 self.client = None
             except Exception as e:
-                print(f"Warning: Failed to initialize Claude client: {e}")
+                logger.error(f"Failed to initialize Claude client: {e}", exc_info=True)
                 self.client = None
 
     def is_available(self) -> bool:

@@ -6,7 +6,10 @@ OpenAI embedding 또는 로컬 모델 지원
 
 from typing import List, Optional
 from abc import ABC, abstractmethod
+import logging
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class BaseEmbeddingProvider(ABC):
@@ -42,10 +45,11 @@ class OpenAIEmbedding(BaseEmbeddingProvider):
             try:
                 from openai import OpenAI
                 self.client = OpenAI(api_key=settings.OPENAI_API_KEY)
+                logger.info(f"OpenAI embedding client initialized with model: {self.model}")
             except ImportError:
-                print("⚠️  openai 패키지가 설치되지 않음")
+                logger.warning("openai package not installed")
             except Exception as e:
-                print(f"⚠️  OpenAI 클라이언트 초기화 실패: {e}")
+                logger.error(f"OpenAI client initialization failed: {e}", exc_info=True)
 
     def embed_text(self, text: str) -> List[float]:
         """단일 텍스트를 임베딩"""
@@ -95,12 +99,11 @@ class LocalEmbedding(BaseEmbeddingProvider):
         try:
             from sentence_transformers import SentenceTransformer
             self.model = SentenceTransformer(self.model_name)
-            print(f"✓ 로컬 임베딩 모델 로드 완료: {self.model_name}")
+            logger.info(f"Local embedding model loaded: {self.model_name}")
         except ImportError:
-            print("⚠️  sentence-transformers 패키지가 설치되지 않음")
-            print("   pip install sentence-transformers 실행 필요")
+            logger.warning("sentence-transformers package not installed. Run: pip install sentence-transformers")
         except Exception as e:
-            print(f"⚠️  로컬 모델 초기화 실패: {e}")
+            logger.error(f"Local model initialization failed: {e}", exc_info=True)
 
     def embed_text(self, text: str) -> List[float]:
         """단일 텍스트를 임베딩"""
@@ -155,10 +158,10 @@ class EmbeddingService:
             raise ValueError(f"알 수 없는 프로바이더: {self.provider_name}")
 
         if not self.provider.is_available():
-            print(f"⚠️  {self.provider_name} 프로바이더를 사용할 수 없습니다")
+            logger.warning(f"{self.provider_name} provider not available")
             # Fallback to local
             if self.provider_name == "openai":
-                print("   로컬 모델로 전환 시도...")
+                logger.info("Attempting fallback to local embedding model...")
                 self.provider_name = "local"
                 self.provider = LocalEmbedding()
 

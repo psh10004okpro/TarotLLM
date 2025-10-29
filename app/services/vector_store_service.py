@@ -5,13 +5,17 @@ ChromaDB를 사용한 벡터 데이터베이스 서비스
 """
 
 from typing import List, Dict, Any, Optional, Tuple
+import logging
 import chromadb
 from chromadb.config import Settings
+from chromadb.errors import InvalidCollectionException
 from pathlib import Path
 from app.services.embedding_service import embedding_service
 from app.services.rag_service import rag_service
 from app.models.tarot_card import TarotCard
 from app.config import settings as app_settings
+
+logger = logging.getLogger(__name__)
 
 
 class VectorStoreService:
@@ -45,19 +49,18 @@ class VectorStoreService:
                 self.collection = self.client.get_collection(
                     name=self.collection_name
                 )
-                print(f"✓ 기존 컬렉션 로드: {self.collection_name}")
-            except Exception:
+                logger.info(f"Loaded existing collection: {self.collection_name}")
+            except (InvalidCollectionException, ValueError):
                 # Collection doesn't exist, create new one
                 self.collection = self.client.create_collection(
                     name=self.collection_name,
                     metadata={"description": "Tarot card meanings and interpretations"}
                 )
-                print(f"✓ 새 컬렉션 생성: {self.collection_name}")
+                logger.info(f"Created new collection: {self.collection_name}")
 
         except Exception as e:
-            print(f"⚠️  ChromaDB 초기화 실패: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"ChromaDB initialization failed: {e}", exc_info=True)
+            self.collection = None
 
     def _prepare_card_documents(self, card: TarotCard) -> List[Dict[str, Any]]:
         """
@@ -201,22 +204,22 @@ class VectorStoreService:
             force_reindex: True일 경우 기존 데이터 삭제 후 재인덱싱
         """
         if not self.collection:
-            print("❌ 컬렉션이 초기화되지 않음")
+            logger.error("Collection not initialized")
             return
 
         if not embedding_service.is_available():
-            print("❌ 임베딩 서비스를 사용할 수 없습니다")
+            logger.error("Embedding service not available")
             return
 
         # 기존 데이터 확인
         existing_count = self.collection.count()
         if existing_count > 0 and not force_reindex:
-            print(f"✓ 이미 {existing_count}개의 문서가 인덱싱되어 있습니다")
+            logger.info(f"Already indexed {existing_count} documents")
             return
 
         # 기존 데이터 삭제 (재인덱싱 시)
         if force_reindex and existing_count > 0:
-            print(f"🔄 기존 {existing_count}개 문서 삭제 중...")
+            logger.info(f"Deleting existing {existing_count} documents for reindexing...")
             self.client.delete_collection(self.collection_name)
             self.collection = self.client.create_collection(
                 name=self.collection_name,
@@ -225,7 +228,7 @@ class VectorStoreService:
 
         # 모든 카드 가져오기
         all_cards = rag_service.get_all_cards()
-        print(f"\n📚 {len(all_cards)}장의 타로카드 인덱싱 시작...")
+        logger.info(f"Starting indexing of {len(all_cards)} tarot cards...")
 
         all_documents = []
         all_ids = []
@@ -241,8 +244,8 @@ class VectorStoreService:
                 all_texts.append(doc["text"])
                 all_metadatas.append(doc["metadata"])
 
-        print(f"📝 총 {len(all_documents)}개의 문서 생성됨")
-        print(f"🔢 임베딩 생성 중... (차원: {embedding_service.get_dimension()})")
+        logger.info(f"Generated {len(all_documents)} documents")
+        logger.info(f"Creating embeddings (dimension: {embedding_service.get_dimension()})...")
 
         try:
             # 배치로 임베딩 생성
@@ -264,14 +267,12 @@ class VectorStoreService:
                     metadatas=batch_metadatas
                 )
 
-                print(f"   ✓ {batch_end}/{len(all_texts)} 문서 인덱싱 완료")
+                logger.debug(f"Indexed {batch_end}/{len(all_texts)} documents")
 
-            print(f"\n✅ 인덱싱 완료! 총 {len(all_documents)}개 문서")
+            logger.info(f"Indexing completed! Total: {len(all_documents)} documents")
 
         except Exception as e:
-            print(f"❌ 인덱싱 실패: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Indexing failed: {e}", exc_info=True)
 
     def search(
         self,
@@ -293,11 +294,11 @@ class VectorStoreService:
             검색 결과 리스트
         """
         if not self.collection:
-            print("❌ 컬렉션이 초기화되지 않음")
+            logger.error("Collection not initialized")
             return []
 
         if not embedding_service.is_available():
-            print("❌ 임베딩 서비스를 사용할 수 없습니다")
+            logger.error("Embedding service not available")
             return []
 
         try:
@@ -344,9 +345,7 @@ class VectorStoreService:
             return formatted_results
 
         except Exception as e:
-            print(f"❌ 검색 실패: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Search failed: {e}", exc_info=True)
             return []
 
     def get_context_for_cards(
