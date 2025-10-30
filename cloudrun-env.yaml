@@ -1,0 +1,55 @@
+# =============================================================================
+# Cloud Run 환경 변수 설정
+# Google Cloud Run 배포 시 사용
+# =============================================================================
+
+# API Settings
+API_V1_STR: "/api/v1"
+PROJECT_NAME: "Unwoldam Tarot API"
+VERSION: "1.2.0"
+
+# CORS - Production (실제 도메인으로 변경 필요)
+# 쉼표로 구분하여 여러 도메인 추가 가능
+ALLOWED_ORIGINS: "https://yourdomain.com,https://www.yourdomain.com,https://api.yourdomain.com"
+
+# Server Settings
+ENVIRONMENT: "production"
+DEBUG: "false"
+LOG_LEVEL: "INFO"
+HOST: "0.0.0.0"
+PORT: "8000"
+
+# LLM Models
+CLAUDE_MODEL: "claude-sonnet-4-5-20250929"
+OPENAI_MODEL: "gpt-4-turbo"
+GEMINI_MODEL: "gemini-pro"
+DEFAULT_LLM_PROVIDER: "claude"
+
+# RAG Settings
+EMBEDDING_MODEL: "text-embedding-3-small"
+VECTOR_STORE_PATH: "./data/vector_store"
+CHUNK_SIZE: "500"
+CHUNK_OVERLAP: "50"
+RAG_TOP_K: "5"
+TAROT_CARDS_PATH: "data/tarot_cards"
+
+# Session Settings
+SESSION_EXPIRY_HOURS: "24"
+MAX_SESSION_HISTORY: "100"
+REDIS_KEY_EXPIRY_DAYS: "90"
+
+# Tarot System
+DEFAULT_TAROT_MASTER: "master_1"
+DEFAULT_SPREAD_TYPE: "three_card"
+USE_OPTIMIZED_PROMPTS: "true"
+USE_DETAILED_ON_FIRST: "true"
+USE_DETAILED_ON_COMPLEX: "true"
+PROMPT_TOKEN_BUDGET: "4000"
+
+# Security
+RATE_LIMIT_ENABLED: "true"
+RATE_LIMIT_PER_MINUTE: "10"
+HTTPS_ONLY: "true"
+
+# Note: Secrets (API keys, SECRET_KEY)는 --set-secrets 플래그로 설정
+# Note: REDIS_URL은 Memorystore 사용 시 --set-env-vars로 설정

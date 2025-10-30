@@ -11,10 +11,17 @@ AI-powered Tarot Card Reading API with multiple LLM providers and diverse tarot 
 
 ## 📚 Documentation
 
-- [🚀 프로덕션 배포 가이드](docs/DEPLOYMENT.md) - Docker, 클라우드, CI/CD, 모니터링
+### 배포 & 운영
+- [⚡ GCP 빠른 시작](docs/GCP_QUICK_START.md) - **30분 만에 배포** (가장 쉬움)
+- [☁️ GCP Cloud Run 가이드](docs/GCP_DEPLOYMENT.md) - 상세 배포 가이드
+- [🚀 프로덕션 배포 가이드](docs/DEPLOYMENT.md) - Docker, AWS, GCP, Azure
+
+### 개발 & 테스트
 - [🛡️ 보안 및 품질 가이드](docs/SECURITY.md) - 보안 기능, 테스트, 의존성 관리
 - [🧪 테스트 가이드](docs/TESTING.md) - 70개 단위 테스트 상세 설명
 - [📖 API 문서](http://localhost:8000/docs) - 대화형 Swagger UI
+
+### 시스템 가이드
 - [🤖 LLM Provider 가이드](docs/LLM_PROVIDER_GUIDE_KR.md) - LLM 프로바이더 사용법
 - [📚 RAG 시스템 가이드](docs/RAG_SYSTEM_GUIDE_KR.md) - 벡터 검색 상세 가이드
 - [🎭 Persona 시스템 가이드](docs/PERSONA_SYSTEM_GUIDE_KR.md) - 타로마스터 페르소나
@@ -106,7 +113,24 @@ unwoldam-api/
 
 ## 🚀 Quick Start
 
-### Option 1: Docker (권장)
+### Option 1: Google Cloud Run (프로덕션 배포) ⭐
+
+**30분 만에 프로덕션 배포!**
+
+```bash
+# 1. gcloud CLI 설치
+brew install --cask google-cloud-sdk  # macOS
+
+# 2. 배포 스크립트 실행
+./deploy-cloudrun.sh
+
+# 완료! 자동으로 HTTPS URL 생성
+# https://unwoldam-tarot-api-xxx.a.run.app
+```
+
+📖 **상세 가이드:** [GCP 빠른 시작](docs/GCP_QUICK_START.md)
+
+### Option 2: Docker (로컬 개발) 권장
 
 ```bash
 # 1. 환경변수 설정
@@ -120,7 +144,7 @@ docker-compose up -d
 open http://localhost:8000/docs
 ```
 
-### Option 2: 로컬 개발
+### Option 3: 로컬 개발
 
 ```bash
 # 1. 저장소 클론
@@ -143,7 +167,7 @@ python -m app.main
 # 또는: uvicorn app.main:app --reload
 ```
 
-### Option 3: Redis 없이 실행
+### Option 4: Redis 없이 실행
 
 Redis가 없어도 메모리 기반 세션 관리로 정상 작동합니다:
 

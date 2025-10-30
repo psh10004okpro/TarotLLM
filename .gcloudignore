@@ -1,0 +1,89 @@
+# =============================================================================
+# .gcloudignore - Cloud Build 시 제외할 파일
+# =============================================================================
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+.tox/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development.example
+.env.production.example
+
+# Logs
+logs/
+*.log
+
+# Documentation (빌드에 불필요)
+docs/
+README.md
+*.md
+!requirements.txt
+
+# Docker (이미 빌드됨)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Test files (프로덕션 불필요)
+test_*.py
+tests/
+FINAL_CHECKLIST.py
+TECHNICAL_ISSUES_REPORT.md
+PRIORITIZED_FIXES.md
+ANALYSIS_SUMMARY.txt
+COMPREHENSIVE_CODE_ANALYSIS.md
+
+# Scripts (로컬 개발용)
+init_vector_db.py
+test_vector_search.py
+
+# GitHub (Cloud Build에서 불필요)
+.github/
+
+# Cloud Run 설정 (배포 시 명시적으로 사용)
+cloudrun-env.yaml
+deploy-cloudrun.sh
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
