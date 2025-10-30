@@ -34,6 +34,9 @@ env/
 .env.local
 .env.*.local
 
+# Deployment scripts with API keys (DO NOT COMMIT!)
+deploy-with-keys.sh
+
 # IDE
 .vscode/
 .idea/
