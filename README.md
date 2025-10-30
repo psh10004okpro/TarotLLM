@@ -2,7 +2,7 @@
 
 AI-powered Tarot Card Reading API with multiple LLM providers and diverse tarot master personas.
 
-**Phase 1-11 완료** ✅ | Version 1.1.0 | [API Documentation](http://localhost:8000/docs)
+**Phase 1-12 완료** ✅ | Version 1.2.0 | [API Documentation](http://localhost:8000/docs)
 
 [![Tests](https://img.shields.io/badge/tests-70%2F70%20passing-success)](docs/TESTING.md)
 [![Security](https://img.shields.io/badge/security-rate%20limiting%20%7C%20CORS%20%7C%20sanitization-blue)](docs/SECURITY.md)
@@ -11,12 +11,13 @@ AI-powered Tarot Card Reading API with multiple LLM providers and diverse tarot 
 
 ## 📚 Documentation
 
-- [보안 및 품질 가이드](docs/SECURITY.md) - 보안 기능, 테스트, 의존성 관리
-- [테스트 가이드](docs/TESTING.md) - 70개 단위 테스트 상세 설명
-- [API 문서](http://localhost:8000/docs) - 대화형 Swagger UI
-- [LLM Provider 가이드](docs/LLM_PROVIDER_GUIDE_KR.md) - LLM 프로바이더 사용법
-- [RAG 시스템 가이드](docs/RAG_SYSTEM_GUIDE_KR.md) - 벡터 검색 상세 가이드
-- [Persona 시스템 가이드](docs/PERSONA_SYSTEM_GUIDE_KR.md) - 타로마스터 페르소나
+- [🚀 프로덕션 배포 가이드](docs/DEPLOYMENT.md) - Docker, 클라우드, CI/CD, 모니터링
+- [🛡️ 보안 및 품질 가이드](docs/SECURITY.md) - 보안 기능, 테스트, 의존성 관리
+- [🧪 테스트 가이드](docs/TESTING.md) - 70개 단위 테스트 상세 설명
+- [📖 API 문서](http://localhost:8000/docs) - 대화형 Swagger UI
+- [🤖 LLM Provider 가이드](docs/LLM_PROVIDER_GUIDE_KR.md) - LLM 프로바이더 사용법
+- [📚 RAG 시스템 가이드](docs/RAG_SYSTEM_GUIDE_KR.md) - 벡터 검색 상세 가이드
+- [🎭 Persona 시스템 가이드](docs/PERSONA_SYSTEM_GUIDE_KR.md) - 타로마스터 페르소나
 
 ## ✨ Features
 
@@ -56,7 +57,15 @@ AI-powered Tarot Card Reading API with multiple LLM providers and diverse tarot 
 - ✅ **테스트 Coverage**: 70개 단위 테스트 (100% 통과)
 - ✅ **최신 의존성**: chromadb 1.2.1, sentence-transformers 5.1.2
 
-📖 **자세한 내용**: [보안 가이드](docs/SECURITY.md) | [테스트 가이드](docs/TESTING.md)
+### 🚀 프로덕션 배포 (Phase 12)
+- ✅ **Docker 최적화**: 멀티스테이지 빌드, Non-root 사용자
+- ✅ **Gunicorn + Uvicorn**: 프로덕션급 ASGI 서버 (4 workers)
+- ✅ **CI/CD**: GitHub Actions (테스트, 빌드, 배포 자동화)
+- ✅ **환경별 설정**: Development, Production 분리
+- ✅ **성능 테스트**: Locust 부하 테스트 준비
+- ✅ **클라우드 배포 가이드**: AWS, GCP, Azure 지원
+
+📖 **자세한 내용**: [배포 가이드](docs/DEPLOYMENT.md) | [보안 가이드](docs/SECURITY.md) | [테스트 가이드](docs/TESTING.md)
 
 ## Project Structure
 
@@ -564,12 +573,14 @@ See [Persona System Guide (Korean)](docs/PERSONA_SYSTEM_GUIDE_KR.md) for detaile
 - [x] 70개 단위 테스트 작성
 - [x] 문서화 개선
 
-#### Phase 12: 프로덕션 배포
-- [ ] 클라우드 배포 (AWS/GCP/Azure)
-- [ ] CI/CD 파이프라인
-- [ ] 모니터링 및 로깅 (Prometheus, Grafana)
-- [ ] 성능 최적화 및 부하 테스트
-- [ ] SSL/TLS 인증서
+#### Phase 12: 프로덕션 배포 ✅
+- [x] Docker 최적화 (멀티스테이지, Non-root)
+- [x] Gunicorn + Uvicorn 프로덕션 서버
+- [x] GitHub Actions CI/CD 파이프라인 (3개 워크플로우)
+- [x] 환경별 설정 관리 (dev/prod)
+- [x] 성능 테스트 준비 (Locust)
+- [x] 클라우드 배포 가이드 (AWS, GCP, Azure)
+- [x] 프로덕션 배포 문서 (DEPLOYMENT.md)
 
 #### Phase 13: 고급 기능
 - [ ] 커스텀 스프레드 빌더

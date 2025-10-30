@@ -1,33 +1,29 @@
 # =============================================================================
-# Unwoldam Tarot LLM API - Docker Compose (Default: Development)
+# Unwoldam Tarot LLM API - Docker Compose (Production)
 # Phase 12: 프로덕션 배포
-#
-# Usage:
-#   Development: docker-compose up -d
-#   Production:  docker-compose -f docker-compose.prod.yml up -d
 # =============================================================================
 
 version: '3.8'
 
 services:
   # ============================================================================
-  # Tarot API Service (Development)
+  # Tarot API Service (Production)
   # ============================================================================
   tarot-api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: unwoldam-tarot-api-dev
+    container_name: unwoldam-tarot-api-prod
     ports:
       - "8000:8000"
     environment:
       # API Settings
       - API_V1_STR=/api/v1
-      - PROJECT_NAME=Unwoldam Tarot API (Dev)
+      - PROJECT_NAME=Unwoldam Tarot API
       - VERSION=1.1.0
 
-      # CORS
-      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000
+      # CORS - Production URLs (환경에 맞게 수정 필요)
+      - ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 
       # LLM API Keys (환경변수에서 주입)
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
@@ -36,22 +32,28 @@ services:
 
       # Redis 설정
       - REDIS_URL=redis://redis:6379/0
+      - REDIS_KEY_EXPIRY_DAYS=90
 
       # Server Settings
       - HOST=0.0.0.0
       - PORT=8000
-      - ENVIRONMENT=development
-      - DEBUG=true
+      - ENVIRONMENT=production
+      - DEBUG=false
 
       # Logging
-      - LOG_LEVEL=DEBUG
+      - LOG_LEVEL=INFO
+      - LOG_FILE=/app/logs/tarot_api.log
+
+      # Performance
+      - WORKERS=4
+      - TIMEOUT=120
     volumes:
-      # 개발 모드: 코드 변경 실시간 반영
-      - .:/app
-      - /app/__pycache__
-      - /app/.pytest_cache
+      # 데이터 및 로그 볼륨 (프로덕션에서는 read-only 권장)
+      - ./data:/app/data:ro
+      - tarot-logs:/app/logs
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - tarot-network
@@ -60,21 +62,35 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
-    # Development mode: 코드 변경 시 자동 재시작
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
 
   # ============================================================================
   # Redis Service (세션 관리)
   # ============================================================================
   redis:
     image: redis:7-alpine
-    container_name: unwoldam-redis-dev
+    container_name: unwoldam-redis-prod
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
     volumes:
-      - redis-data-dev:/data
+      - redis-data:/data
     restart: unless-stopped
     networks:
       - tarot-network
@@ -83,12 +99,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
 
 # =============================================================================
 # Volumes
 # =============================================================================
 volumes:
-  redis-data-dev:
+  redis-data:
+    driver: local
+  tarot-logs:
     driver: local
 
 # =============================================================================

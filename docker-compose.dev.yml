@@ -1,10 +1,6 @@
 # =============================================================================
-# Unwoldam Tarot LLM API - Docker Compose (Default: Development)
+# Unwoldam Tarot LLM API - Docker Compose (Development)
 # Phase 12: 프로덕션 배포
-#
-# Usage:
-#   Development: docker-compose up -d
-#   Production:  docker-compose -f docker-compose.prod.yml up -d
 # =============================================================================
 
 version: '3.8'
